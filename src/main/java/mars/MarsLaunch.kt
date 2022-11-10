@@ -82,10 +82,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 class MarsLaunch(args: Array<String>)
 {
     private var simulate = true
-    private var displayFormat = 0
+    private var displayFormat = HEXADECIMAL
     
     // display register name or address along with contents
-    private var verbose = false
+    private var verbose = true
     
     // assemble only the given file or all files in its directory
     private var assembleProject = false
@@ -107,13 +107,21 @@ class MarsLaunch(args: Array<String>)
     
     // Whether to allow self-modifying code (e.g. write to text segment)
     private var selfModifyingCode = false
+
+    private var instructionCount = 0
+
+    // MARS command exit code to return if assemble error occurs
+    private var assembleErrorExitCode = 0
+
+    // MARS command exit code to return if simulation error occurs
+    private var simulateErrorExitCode = 0
     
-    private var registerDisplayList: ArrayList<String>? = null
-    private var memoryDisplayList: ArrayList<String>? = null
-    private var filenameList: ArrayList<String>? = null
+    private var registerDisplayList: ArrayList<String> = ArrayList()
+    private var memoryDisplayList: ArrayList<String> = ArrayList()
+    private var filenameList: ArrayList<String> = ArrayList()
+
     private var code: MIPSprogram? = null
     private var maxSteps = 0
-    private var instructionCount = 0
 
     // stream for display of command line output
     private var out: PrintStream = System.out
@@ -123,12 +131,6 @@ class MarsLaunch(args: Array<String>)
     
     // optional program args for MIPS program (becomes argc, argv)
     private var programArgumentList: ArrayList<String>? = null
-    
-    // MARS command exit code to return if assemble error occurs
-    private var assembleErrorExitCode = 0
-    
-    // MARS command exit code to return if simulation error occurs
-    private var simulateErrorExitCode = 0
 
     init
     {
@@ -143,22 +145,6 @@ class MarsLaunch(args: Array<String>)
             // running from command line.
             // assure command mode works in headless environment (generates exception if not)
             System.setProperty("java.awt.headless", "true")
-            simulate = true
-            displayFormat = HEXADECIMAL
-            verbose = true
-            assembleProject = false
-            pseudo = true
-            delayedBranching = false
-            warningsAreErrors = false
-            startAtMain = false
-            countInstructions = false
-            selfModifyingCode = false
-            instructionCount = 0
-            assembleErrorExitCode = 0
-            simulateErrorExitCode = 0
-            registerDisplayList = ArrayList()
-            memoryDisplayList = ArrayList()
-            filenameList = ArrayList()
             MemoryConfigurations.setCurrentConfiguration(MemoryConfigurations.getDefaultConfiguration())
             // do NOT use Globals.program for command line MARS -- it triggers 'backstep' log.
             code = MIPSprogram()
@@ -267,12 +253,11 @@ class MarsLaunch(args: Array<String>)
     // Returns true if command args parse OK, false otherwise.
     private fun parseCommandArgs(args: Array<String>): Boolean
     {
-        val noCopyrightSwitch = "nc"
         val displayMessagesToErrSwitch = "me"
         var argsOK = true
         var inProgramArgumentList = false
         programArgumentList = null
-        if (args.size == 0)
+        if (args.isEmpty())
         {
             return true // should not get here...
         }
@@ -280,7 +265,6 @@ class MarsLaunch(args: Array<String>)
         // it must be processed before any others (since messages may be
         // generated during option parsing).
         processDisplayMessagesToErrSwitch(args, displayMessagesToErrSwitch)
-        displayCopyright(args, noCopyrightSwitch) // ..or not..
         if (args.size == 1 && args[0] == "h")
         {
             displayHelp()
@@ -312,12 +296,6 @@ class MarsLaunch(args: Array<String>)
             }
             // messages-to-standard-error switch already processed, so ignore.
             if (args[i].lowercase(Locale.getDefault()) == displayMessagesToErrSwitch)
-            {
-                i++
-                continue
-            }
-            // no-copyright switch already processed, so ignore.
-            if (args[i].lowercase(Locale.getDefault()) == noCopyrightSwitch)
             {
                 i++
                 continue
@@ -479,7 +457,7 @@ class MarsLaunch(args: Array<String>)
                     out.println("Invalid Register Name: " + args[i])
                 } else
                 {
-                    registerDisplayList!!.add(args[i])
+                    registerDisplayList.add(args[i])
                 }
                 i++
                 continue
@@ -489,7 +467,7 @@ class MarsLaunch(args: Array<String>)
                 Coprocessor1.getRegister("$" + args[i]) != null
             )
             {
-                registerDisplayList!!.add("$" + args[i])
+                registerDisplayList.add("$" + args[i])
                 i++
                 continue
             }
@@ -513,8 +491,8 @@ class MarsLaunch(args: Array<String>)
             try
             {
                 val memoryRange = checkMemoryAddressRange(args[i])
-                memoryDisplayList!!.add(memoryRange!![0]) // low end of range
-                memoryDisplayList!!.add(memoryRange[1]) // high end of range
+                memoryDisplayList.add(memoryRange!![0]) // low end of range
+                memoryDisplayList.add(memoryRange[1]) // high end of range
                 i++
                 continue
             } catch (nfe: NumberFormatException)
@@ -540,7 +518,7 @@ class MarsLaunch(args: Array<String>)
     private fun runCommand(): Boolean
     {
         var programRan = false
-        if (filenameList!!.size == 0)
+        if (filenameList.size == 0)
         {
             return programRan
         }
@@ -549,16 +527,16 @@ class MarsLaunch(args: Array<String>)
             Globals.getSettings().setBooleanSettingNonPersistent(Settings.DELAYED_BRANCHING_ENABLED, delayedBranching)
             Globals.getSettings()
                 .setBooleanSettingNonPersistent(Settings.SELF_MODIFYING_CODE_ENABLED, selfModifyingCode)
-            val mainFile = File(filenameList!![0]).absoluteFile // First file is "main" file
+            val mainFile = File(filenameList[0]).absoluteFile // First file is "main" file
             val filesToAssemble: ArrayList<*>
             if (assembleProject)
             {
                 filesToAssemble = FilenameFinder.getFilenameList(mainFile.parent, Globals.fileExtensions)
-                if (filenameList!!.size > 1)
+                if (filenameList.size > 1)
                 {
                     // Using "p" project option PLUS listing more than one filename on command line.
                     // Add the additional files, avoiding duplicates.
-                    filenameList!!.removeAt(0) // first one has already been processed
+                    filenameList.removeAt(0) // first one has already been processed
                     val moreFilesToAssemble =
                         FilenameFinder.getFilenameList(filenameList, FilenameFinder.MATCH_ALL_EXTENSIONS)
                     // Remove any duplicates then merge the two lists.
@@ -726,7 +704,7 @@ class MarsLaunch(args: Array<String>)
         var strValue: String
         // Display requested register contents
         out.println()
-        val regIter: Iterator<String> = registerDisplayList!!.iterator()
+        val regIter: Iterator<String> = registerDisplayList.iterator()
         while (regIter.hasNext())
         {
             val reg = regIter.next()
@@ -752,7 +730,7 @@ class MarsLaunch(args: Array<String>)
                     dvalue = Coprocessor1.getDoubleFromRegisterPair(reg)
                     lvalue = Coprocessor1.getLongFromRegisterPair(reg)
                     hasDouble = true
-                } catch (irae: InvalidRegisterAccessException)
+                } catch (_: InvalidRegisterAccessException)
                 {
                 }
                 if (verbose)
@@ -839,7 +817,7 @@ class MarsLaunch(args: Array<String>)
             { // This will succeed; error would have been caught during command arg parse
                 addressStart = Binary.stringToInt(memIter.next().toString())
                 addressEnd = Binary.stringToInt(memIter.next().toString())
-            } catch (nfe: NumberFormatException)
+            } catch (_: NumberFormatException)
             {
             }
             var valuesDisplayed = 0
@@ -898,25 +876,6 @@ class MarsLaunch(args: Array<String>)
     }
 
     ///////////////////////////////////////////////////////////////////////
-    //  Decide whether copyright should be displayed, and display
-    //  if so.
-    private fun displayCopyright(args: Array<String>, noCopyrightSwitch: String)
-    {
-        val print = true
-        for (i in args.indices)
-        {
-            if (args[i].lowercase(Locale.getDefault()) == noCopyrightSwitch)
-            {
-                return
-            }
-        }
-        out.println(
-            """MARS ${Globals.version}  Copyright ${Globals.copyrightYears} ${Globals.copyrightHolders}
-"""
-        )
-    }
-
-    ///////////////////////////////////////////////////////////////////////
     //  Display command line help text
     private fun displayHelp()
     {
@@ -965,7 +924,6 @@ class MarsLaunch(args: Array<String>)
         out.println("            memory with text segment at address 0.")
         out.println("     me  -- display MARS messages to standard err instead of standard out. ")
         out.println("            Can separate messages from program output using redirection")
-        out.println("     nc  -- do not display copyright notice (for cleaner redirected/piped output).")
         out.println("     np  -- use of pseudo instructions and formats not permitted")
         out.println("      p  -- Project mode - assemble all files in the same directory as given file.")
         out.println("  se<n>  -- terminate MARS with integer exit code <n> if a simulation (run) error occurs.")
