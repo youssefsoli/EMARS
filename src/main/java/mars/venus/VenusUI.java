@@ -50,48 +50,82 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * here primarily so both can share the Action objects.
  */
 
-public class VenusUI extends JFrame {
+public class VenusUI extends JFrame
+{
     private static int menuState = FileStatus.NO_FILE;
+
     // PLEASE PUT THESE TWO (& THEIR METHODS) SOMEWHERE THEY BELONG, NOT HERE
     private static boolean reset = true; // registers/memory reset for execution
+
     private static boolean started = false;  // started execution
+
     public JMenuBar menu;
+
     VenusUI mainUI;
+
     JToolBar toolbar;
+
     MainPane mainPane;
+
     RegistersPane registersPane;
+
     RegistersWindow registersTab;
+
     Coprocessor1Window coprocessor1Tab;
+
     Coprocessor0Window coprocessor0Tab;
+
     MessagesPane messagesPane;
+
     JSplitPane splitter, horizonSplitter;
+
     JPanel north;
+
     Editor editor;
+
     EditUndoAction editUndoAction;
+
     EditRedoAction editRedoAction;
+
     private int frameState; // see windowActivated() and windowDeactivated()
+
     // components of the menubar
     private JMenu file, run, window, help, edit, settings;
+
     private JMenuItem fileNew, fileOpen, fileClose, fileCloseAll, fileSave, fileSaveAs, fileSaveAll, fileDumpMemory, filePrint, fileExit;
+
     private JMenuItem editUndo, editRedo, editCut, editCopy, editPaste, editFindReplace, editSelectAll;
+
     private JMenuItem runGo, runStep, runBackstep, runReset, runAssemble, runStop, runPause, runClearBreakpoints, runToggleBreakpoints;
+
     private JCheckBoxMenuItem settingsLabel, settingsPopupInput, settingsValueDisplayBase, settingsAddressDisplayBase, settingsExtended, settingsAssembleOnOpen, settingsAssembleAll, settingsWarningsAreErrors, settingsStartAtMain, settingsDelayedBranching, settingsProgramArguments, settingsSelfModifyingCode;
+
     private JMenuItem settingsExceptionHandler, settingsEditor, settingsHighlighting, settingsMemoryConfiguration;
+
     private JMenuItem helpHelp, helpAbout;
+
     // components of the toolbar
     private JButton Undo, Redo, Cut, Copy, Paste, FindReplace, SelectAll;
+
     private JButton New, Open, Save, SaveAs, SaveAll, DumpMemory, Print;
 
     // The "action" objects, which include action listeners.  One of each will be created then
     // shared between a menu item and its corresponding toolbar button.  This is a very cool
     // technique because it relates the button and menu item so closely
     private JButton Run, Assemble, Reset, Step, Backstep, Stop, Pause;
+
     private JButton Help;
+
     private Action fileNewAction, fileOpenAction, fileCloseAction, fileCloseAllAction, fileSaveAction;
+
     private Action fileSaveAsAction, fileSaveAllAction, fileDumpMemoryAction, filePrintAction, fileExitAction;
+
     private Action editCutAction, editCopyAction, editPasteAction, editFindReplaceAction, editSelectAllAction;
+
     private Action runAssembleAction, runGoAction, runStepAction, runBackstepAction, runResetAction, runStopAction, runPauseAction, runClearBreakpointsAction, runToggleBreakpointsAction;
+
     private Action settingsLabelAction, settingsPopupInputAction, settingsValueDisplayBaseAction, settingsAddressDisplayBaseAction, settingsExtendedAction, settingsAssembleOnOpenAction, settingsAssembleAllAction, settingsWarningsAreErrorsAction, settingsStartAtMainAction, settingsProgramArgumentsAction, settingsDelayedBranchingAction, settingsExceptionHandlerAction, settingsEditorAction, settingsHighlightingAction, settingsMemoryConfigurationAction, settingsSelfModifyingCodeAction;
+
     private Action helpHelpAction, helpAboutAction;
 
 
@@ -101,7 +135,8 @@ public class VenusUI extends JFrame {
      * @param s Name of the window to be created.
      **/
 
-    public VenusUI(String s) {
+    public VenusUI(String s)
+    {
         super(s);
         mainUI = this;
         Globals.setGui(this);
@@ -129,7 +164,8 @@ public class VenusUI extends JFrame {
 
         //  image courtesy of NASA/JPL.
         URL im = this.getClass().getResource(Globals.imagesPath + "RedMars16.gif");
-        if (im == null) {
+        if (im == null)
+        {
             System.out.println("Internal Error: images folder or file not found");
             System.exit(0);
         }
@@ -193,17 +229,22 @@ public class VenusUI extends JFrame {
 
         // This is invoked when opening the app.  It will set the app to
         // appear at full screen size.
-        this.addWindowListener(new WindowAdapter() {
-            public void windowOpened(WindowEvent e) {
+        this.addWindowListener(new WindowAdapter()
+        {
+            public void windowOpened(WindowEvent e)
+            {
                 mainUI.setExtendedState(JFrame.MAXIMIZED_BOTH);
             }
         });
 
         // This is invoked when exiting the app through the X icon.  It will in turn
         // check for unsaved edits before exiting.
-        this.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                if (mainUI.editor.closeAll()) {
+        this.addWindowListener(new WindowAdapter()
+        {
+            public void windowClosing(WindowEvent e)
+            {
+                if (mainUI.editor.closeAll())
+                {
                     System.exit(0);
                 }
             }
@@ -224,7 +265,8 @@ public class VenusUI extends JFrame {
      * @return current menu state.
      **/
 
-    public static int getMenuState() {
+    public static int getMenuState()
+    {
         return menuState;
     }
 
@@ -243,9 +285,11 @@ public class VenusUI extends JFrame {
      * setMenuStateRunning: set upon Run->Go
      * setMenuStateTerminated: set upon completion of simulated execution
      */
-    void setMenuState(int status) {
+    void setMenuState(int status)
+    {
         menuState = status;
-        switch (status) {
+        switch (status)
+        {
             case FileStatus.NO_FILE:
                 setMenuStateInitial();
                 break;
@@ -289,7 +333,8 @@ public class VenusUI extends JFrame {
      * @return Boolean true if the register values have been reset.
      **/
 
-    public static boolean getReset() {
+    public static boolean getReset()
+    {
         return reset;
     }
 
@@ -299,7 +344,8 @@ public class VenusUI extends JFrame {
      * @param b Boolean true if the register values have been reset.
      **/
 
-    public static void setReset(boolean b) {
+    public static void setReset(boolean b)
+    {
         reset = b;
     }
 
@@ -308,7 +354,8 @@ public class VenusUI extends JFrame {
      *
      * @return true if MIPS program is currently executing.
      **/
-    public static boolean getStarted() {
+    public static boolean getStarted()
+    {
         return started;
     }
 
@@ -318,7 +365,8 @@ public class VenusUI extends JFrame {
      * @param b true if the MIPS program execution has started.
      **/
 
-    public static void setStarted(boolean b) {
+    public static void setStarted(boolean b)
+    {
         started = b;
     }
 
@@ -327,10 +375,12 @@ public class VenusUI extends JFrame {
      * a menu item and a toolbar button.  Does nice things like disable both if the action is
      * disabled, etc.
      */
-    private void createActionObjects() {
+    private void createActionObjects()
+    {
         Toolkit tk = Toolkit.getDefaultToolkit();
         Class cs = this.getClass();
-        try {
+        try
+        {
             fileNewAction = new FileNewAction("New", new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath + "New22.png"))), "Create a new file for editing", KeyEvent.VK_N, KeyStroke.getKeyStroke(KeyEvent.VK_N, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), mainUI);
             fileOpenAction = new FileOpenAction("Open ...", new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath + "Open22.png"))), "Open a file for editing", KeyEvent.VK_O, KeyStroke.getKeyStroke(KeyEvent.VK_O, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), mainUI);
             fileCloseAction = new FileCloseAction("Close", null, "Close the current file", KeyEvent.VK_C, KeyStroke.getKeyStroke(KeyEvent.VK_W, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), mainUI);
@@ -348,7 +398,7 @@ public class VenusUI extends JFrame {
             editPasteAction = new EditPasteAction("Paste", new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath + "Paste22.png"))), "Paste", KeyEvent.VK_P, KeyStroke.getKeyStroke(KeyEvent.VK_V, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), mainUI);
             editFindReplaceAction = new EditFindReplaceAction("Find/Replace", new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath + "Find22.png"))), "Find/Replace", KeyEvent.VK_F, KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), mainUI);
             editSelectAllAction = new EditSelectAllAction("Select All", null, //new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath+"Find22.png"))),
-                    "Select All", KeyEvent.VK_A, KeyStroke.getKeyStroke(KeyEvent.VK_A, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), mainUI);
+                "Select All", KeyEvent.VK_A, KeyStroke.getKeyStroke(KeyEvent.VK_A, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), mainUI);
             runAssembleAction = new RunAssembleAction("Assemble", new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath + "Assemble22.png"))), "Assemble the current file and clear breakpoints", KeyEvent.VK_A, KeyStroke.getKeyStroke(KeyEvent.VK_F3, 0), mainUI);
             runGoAction = new RunGoAction("Go", new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath + "Play22.png"))), "Run the current program", KeyEvent.VK_G, KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0), mainUI);
             runStepAction = new RunStepAction("Step", new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath + "StepForward22.png"))), "Run one step at a time", KeyEvent.VK_T, KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0), mainUI);
@@ -377,14 +427,17 @@ public class VenusUI extends JFrame {
             settingsMemoryConfigurationAction = new SettingsMemoryConfigurationAction("Memory Configuration...", null, "View and modify memory segment base addresses for simulated MIPS.", null, null, mainUI);
             helpHelpAction = new HelpHelpAction("Help", new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath + "Help22.png"))), "Help", KeyEvent.VK_H, KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), mainUI);
             helpAboutAction = new HelpAboutAction("About ...", null, "Information about Mars", null, null, mainUI);
-        } catch (NullPointerException e) {
+        }
+        catch (NullPointerException e)
+        {
             System.out.println("Internal Error: images folder not found, or other null pointer exception while creating Action objects");
             e.printStackTrace();
             System.exit(0);
         }
     }
 
-    private JMenuBar setUpMenuBar() {
+    private JMenuBar setUpMenuBar()
+    {
 
         Toolkit tk = Toolkit.getDefaultToolkit();
         Class cs = this.getClass();
@@ -431,7 +484,8 @@ public class VenusUI extends JFrame {
         file.add(fileSave);
         file.add(fileSaveAs);
         file.add(fileSaveAll);
-        if (new mars.mips.dump.DumpFormatLoader().loadDumpFormats().size() > 0) {
+        if (new mars.mips.dump.DumpFormatLoader().loadDumpFormats().size() > 0)
+        {
             file.add(fileDumpMemory);
         }
         file.addSeparator();
@@ -559,7 +613,10 @@ public class VenusUI extends JFrame {
         menuBar.add(run);
         menuBar.add(settings);
         JMenu toolMenu = new ToolLoader().buildToolsMenu();
-        if (toolMenu != null) menuBar.add(toolMenu);
+        if (toolMenu != null)
+        {
+            menuBar.add(toolMenu);
+        }
         menuBar.add(help);
 
         // experiment with popup menu for settings. 3 Aug 2006 PS
@@ -568,7 +625,8 @@ public class VenusUI extends JFrame {
         return menuBar;
     }
 
-    JToolBar setUpToolBar() {
+    JToolBar setUpToolBar()
+    {
         JToolBar toolBar = new JToolBar();
 
         New = new JButton(fileNewAction);
@@ -620,7 +678,8 @@ public class VenusUI extends JFrame {
         toolBar.add(Open);
         toolBar.add(Save);
         toolBar.add(SaveAs);
-        if (new mars.mips.dump.DumpFormatLoader().loadDumpFormats().size() > 0) {
+        if (new mars.mips.dump.DumpFormatLoader().loadDumpFormats().size() > 0)
+        {
             toolBar.add(DumpMemory);
         }
         toolBar.add(Print);
@@ -646,7 +705,8 @@ public class VenusUI extends JFrame {
         return toolBar;
     }
 
-    void setMenuStateInitial() {
+    void setMenuStateInitial()
+    {
         fileNewAction.setEnabled(true);
         fileOpenAction.setEnabled(true);
         fileCloseAction.setEnabled(false);
@@ -684,7 +744,8 @@ public class VenusUI extends JFrame {
     /* Added DPS 9-Aug-2011, for newly-opened files.  Retain
         existing Run menu state (except Assemble, which is always true).
          Thus if there was a valid assembly it is retained. */
-    void setMenuStateNotEdited() {
+    void setMenuStateNotEdited()
+    {
         /* Note: undo and redo are handled separately by the undo manager*/
         fileNewAction.setEnabled(true);
         fileOpenAction.setEnabled(true);
@@ -706,7 +767,8 @@ public class VenusUI extends JFrame {
         runAssembleAction.setEnabled(true);
         // If assemble-all, allow previous Run menu settings to remain.
         // Otherwise, clear them out.  DPS 9-Aug-2011
-        if (!Globals.getSettings().getBooleanSetting(mars.Settings.ASSEMBLE_ALL_ENABLED)) {
+        if (!Globals.getSettings().getBooleanSetting(mars.Settings.ASSEMBLE_ALL_ENABLED))
+        {
             runGoAction.setEnabled(false);
             runStepAction.setEnabled(false);
             runBackstepAction.setEnabled(false);
@@ -722,7 +784,8 @@ public class VenusUI extends JFrame {
         editRedoAction.updateRedoState();
     }
 
-    void setMenuStateEditing() {
+    void setMenuStateEditing()
+    {
         /* Note: undo and redo are handled separately by the undo manager*/
         fileNewAction.setEnabled(true);
         fileOpenAction.setEnabled(true);
@@ -758,7 +821,8 @@ public class VenusUI extends JFrame {
 
     /* Use this when "File -> New" is used
      */
-    void setMenuStateEditingNew() {
+    void setMenuStateEditingNew()
+    {
         /* Note: undo and redo are handled separately by the undo manager*/
         fileNewAction.setEnabled(true);
         fileOpenAction.setEnabled(true);
@@ -794,7 +858,8 @@ public class VenusUI extends JFrame {
 
     /* Use this upon successful assemble or reset
      */
-    void setMenuStateRunnable() {
+    void setMenuStateRunnable()
+    {
         /* Note: undo and redo are handled separately by the undo manager */
         fileNewAction.setEnabled(true);
         fileOpenAction.setEnabled(true);
@@ -829,7 +894,8 @@ public class VenusUI extends JFrame {
 
     /* Use this while program is running
      */
-    void setMenuStateRunning() {
+    void setMenuStateRunning()
+    {
         /* Note: undo and redo are handled separately by the undo manager */
         fileNewAction.setEnabled(false);
         fileOpenAction.setEnabled(false);
@@ -864,7 +930,8 @@ public class VenusUI extends JFrame {
 
     /* Use this upon completion of execution
      */
-    void setMenuStateTerminated() {
+    void setMenuStateTerminated()
+    {
         /* Note: undo and redo are handled separately by the undo manager */
         fileNewAction.setEnabled(true);
         fileOpenAction.setEnabled(true);
@@ -903,7 +970,8 @@ public class VenusUI extends JFrame {
      * @return Editor for the GUI.
      **/
 
-    public Editor getEditor() {
+    public Editor getEditor()
+    {
         return editor;
     }
 
@@ -913,7 +981,8 @@ public class VenusUI extends JFrame {
      * @return MessagesPane object associated with the GUI.
      **/
 
-    public MainPane getMainPane() {
+    public MainPane getMainPane()
+    {
         return mainPane;
     }
 
@@ -923,7 +992,8 @@ public class VenusUI extends JFrame {
      * @return MessagesPane object associated with the GUI.
      **/
 
-    public MessagesPane getMessagesPane() {
+    public MessagesPane getMessagesPane()
+    {
         return messagesPane;
     }
 
@@ -933,7 +1003,8 @@ public class VenusUI extends JFrame {
      * @return RegistersPane object associated with the GUI.
      **/
 
-    public RegistersPane getRegistersPane() {
+    public RegistersPane getRegistersPane()
+    {
         return registersPane;
     }
 
@@ -943,7 +1014,8 @@ public class VenusUI extends JFrame {
      * @return the menu item
      **/
 
-    public JCheckBoxMenuItem getValueDisplayBaseMenuItem() {
+    public JCheckBoxMenuItem getValueDisplayBaseMenuItem()
+    {
         return settingsValueDisplayBase;
     }
 
@@ -953,24 +1025,27 @@ public class VenusUI extends JFrame {
      * @return the menu item
      **/
 
-    public JCheckBoxMenuItem getAddressDisplayBaseMenuItem() {
+    public JCheckBoxMenuItem getAddressDisplayBaseMenuItem()
+    {
         return settingsAddressDisplayBase;
     }
 
     /**
-     * Return reference tothe Run->Assemble item's action.  Needed by File->Open in case
-     * assemble-upon-open flag is set.
+     * Return reference tothe Run->Assemble item's action.  Needed by File->Open in case assemble-upon-open flag is
+     * set.
      *
      * @return the Action object for the Run->Assemble operation.
      */
-    public Action getRunAssembleAction() {
+    public Action getRunAssembleAction()
+    {
         return runAssembleAction;
     }
 
     /**
      * Have the menu request keyboard focus.  DPS 5-4-10
      */
-    public void haveMenuRequestFocus() {
+    public void haveMenuRequestFocus()
+    {
         this.menu.requestFocus();
     }
 
@@ -979,12 +1054,14 @@ public class VenusUI extends JFrame {
      *
      * @param evt KeyEvent for menu component to consider for processing.
      */
-    public void dispatchEventToMenu(KeyEvent evt) {
+    public void dispatchEventToMenu(KeyEvent evt)
+    {
         this.menu.dispatchEvent(evt);
     }
 
     // pop up menu experiment 3 Aug 2006.  Keep for possible later revival.
-    private void setupPopupMenu() {
+    private void setupPopupMenu()
+    {
         JPopupMenu popup;
         popup = new JPopupMenu();
         // cannot put the same menu item object on two different menus.
