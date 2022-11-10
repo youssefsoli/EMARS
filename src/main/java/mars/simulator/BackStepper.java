@@ -380,7 +380,7 @@ public class BackStepper
 
 
     // Represents a "back step" (undo action) on the stack.
-    private class BackStep
+    private static class BackStep
     {
         private int action;  // what do do MEMORY_RESTORE_WORD, etc
 
@@ -442,7 +442,7 @@ public class BackStepper
     // regardless of how many steps are executed.  This will speed things up a bit
     // and make life easier for the garbage collector.
 
-    private class BackstepStack
+    private static class BackstepStack
     {
         private final int capacity;
 

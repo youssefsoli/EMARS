@@ -840,7 +840,7 @@ public class KeyboardAndDisplaySimulator extends AbstractMarsToolAndApplication
     // NOTE: last argument TRUE means update only the MMIO Control register; FALSE means update both Control and Data.
     private synchronized void updateMMIOControlAndData(int controlAddr, int controlValue, int dataAddr, int dataValue, boolean controlOnly)
     {
-        if (!this.isBeingUsedAsAMarsTool || (this.isBeingUsedAsAMarsTool && connectButton.isConnected()))
+        if (!this.isBeingUsedAsAMarsTool || connectButton.isConnected())
         {
             synchronized (Globals.memoryAndRegistersLock)
             {

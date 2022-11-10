@@ -280,44 +280,27 @@ public abstract class AbstractMarsToolAndApplication extends JFrame implements M
         connectButton = new ConnectButton();
         connectButton.setToolTipText("Control whether tool will respond to running MIPS program");
         connectButton.addActionListener(
-            new ActionListener()
+            e ->
             {
-                public void actionPerformed(ActionEvent e)
+                if (connectButton.isConnected())
                 {
-                    if (connectButton.isConnected())
-                    {
-                        connectButton.disconnect();
-                    }
-                    else
-                    {
-                        connectButton.connect();
-                    }
+                    connectButton.disconnect();
+                }
+                else
+                {
+                    connectButton.connect();
                 }
             });
         connectButton.addKeyListener(new EnterKeyListener(connectButton));
 
         JButton resetButton = new JButton("Reset");
         resetButton.setToolTipText("Reset all counters and other structures");
-        resetButton.addActionListener(
-            new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    reset();
-                }
-            });
+        resetButton.addActionListener(e -> reset());
         resetButton.addKeyListener(new EnterKeyListener(resetButton));
 
         JButton closeButton = new JButton("Close");
         closeButton.setToolTipText("Close (exit) this tool");
-        closeButton.addActionListener(
-            new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    performToolClosingDuties();
-                }
-            });
+        closeButton.addActionListener(e -> performToolClosingDuties());
         closeButton.addKeyListener(new EnterKeyListener(closeButton));
 
         // Add all the buttons...
@@ -441,26 +424,12 @@ public abstract class AbstractMarsToolAndApplication extends JFrame implements M
 
         JButton resetButton = new JButton("Reset");
         resetButton.setToolTipText("Reset all counters and other structures");
-        resetButton.addActionListener(
-            new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    reset();
-                }
-            });
+        resetButton.addActionListener(e -> reset());
         resetButton.addKeyListener(new EnterKeyListener(resetButton));
 
         JButton closeButton = new JButton("Exit");
         closeButton.setToolTipText("Exit this application");
-        closeButton.addActionListener(
-            new ActionListener()
-            {
-                public void actionPerformed(ActionEvent e)
-                {
-                    performAppClosingDuties();
-                }
-            });
+        closeButton.addActionListener(e -> performAppClosingDuties());
         closeButton.addKeyListener(new EnterKeyListener(closeButton));
 
 
@@ -735,7 +704,7 @@ public abstract class AbstractMarsToolAndApplication extends JFrame implements M
     //  are attached to the button at the time of the call.  Otherwise,
     //  it will call actionPerformed for the first action listener in the
     //  button's list.
-    protected class EnterKeyListener extends KeyAdapter
+    protected static class EnterKeyListener extends KeyAdapter
     {
         AbstractButton myButton;
 
