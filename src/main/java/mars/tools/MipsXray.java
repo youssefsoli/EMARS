@@ -1,62 +1,5 @@
 package mars.tools;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.GridBagLayout;
-import java.awt.Image;
-import java.awt.MouseInfo;
-import java.awt.Point;
-import java.awt.PointerInfo;
-import java.awt.RenderingHints;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.font.FontRenderContext;
-import java.awt.font.TextLayout;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Observable;
-import java.util.Vector;
-
-import javax.imageio.ImageIO;
-import javax.swing.Action;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JToolBar;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-import javax.swing.UIManager;
-//import java.util.Timer;
-import javax.swing.event.InternalFrameEvent;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-
 import mars.Globals;
 import mars.ProgramStatement;
 import mars.mips.hardware.AccessNotice;
@@ -69,6 +12,25 @@ import mars.venus.RunAssembleAction;
 import mars.venus.RunBackstepAction;
 import mars.venus.RunStepAction;
 import mars.venus.VenusUI;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.font.FontRenderContext;
+import java.awt.font.TextLayout;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Observable;
+import java.util.Vector;
 
 public class MipsXray extends AbstractMarsToolAndApplication{
 	private static final long serialVersionUID = -1L;
@@ -117,31 +79,30 @@ public class MipsXray extends AbstractMarsToolAndApplication{
     	  *  Overrides default method, to provide a Help button for this tool/app.
     	  */
         protected JComponent getHelpComponent() {
-          final String helpContent = 
-                              "This plugin is used to visualizate the behavior of mips processor using the default datapath. \n"+
-                              "It reads the source code instruction and generates an animation representing the inputs and \n"+
-             						"outputs of functional blocks and the interconnection between them.  The basic signals \n"+
-             						"represented are, control signals, opcode bits and data of functional blocks.\n"+
-             						"\n"+
-             						"Besides the datapath representation, information for each instruction is displayed below\n"+
-             						"the datapath. That display includes opcode value, with the correspondent colors used to\n"+
-             						"represent the signals in datapath, mnemonic of the instruction processed at the moment, registers\n"+
-             						"used in the instruction and a label that indicates the color code used to represent control signals\n" +
-             						"\n"+
-										"To see the datapath of register bank and control units click inside the functional unit.\n\n" +
-             						"Version 2.0\n" + 
-             						"Developed by Márcio Roberto, Guilherme Sales, Fabrício Vivas, Flávio Cardeal and Fábio Lúcio\n" +
-             						"Contact Marcio Roberto at marcio.rdaraujo@gmail.com with questions or comments.\n"
-             						;
-          JButton help = new JButton("Help");
-          help.addActionListener(
-                 new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                      JOptionPane.showMessageDialog(theWindow, helpContent);
-                   }
-                });		
-          return help;  
-       }
+            final String helpContent =
+                    "This plugin is used to visualizate the behavior of mips processor using the default datapath. \n" +
+                            "It reads the source code instruction and generates an animation representing the inputs and \n" +
+                            "outputs of functional blocks and the interconnection between them.  The basic signals \n" +
+                            "represented are, control signals, opcode bits and data of functional blocks.\n" +
+                            "\n" +
+                            "Besides the datapath representation, information for each instruction is displayed below\n" +
+                            "the datapath. That display includes opcode value, with the correspondent colors used to\n" +
+                            "represent the signals in datapath, mnemonic of the instruction processed at the moment, registers\n" +
+                            "used in the instruction and a label that indicates the color code used to represent control signals\n" +
+                            "\n" +
+                            "To see the datapath of register bank and control units click inside the functional unit.\n\n" +
+                            "Version 2.0\n" +
+                            "Developed by MÃ¡rcio Roberto, Guilherme Sales, FabrÃ­cio Vivas, FlÃ¡vio Cardeal and FÃ¡bio LÃºcio\n" +
+                            "Contact Marcio Roberto at marcio.rdaraujo@gmail.com with questions or comments.\n";
+            JButton help = new JButton("Help");
+            help.addActionListener(
+                    new ActionListener() {
+                        public void actionPerformed(ActionEvent e) {
+                            JOptionPane.showMessageDialog(theWindow, helpContent);
+                        }
+                    });
+            return help;
+        }
      /**
    	 *  Implementation of the inherited abstract method to build the main 
    	 *  display area of the GUI.  It will be placed in the CENTER area of a 

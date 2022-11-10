@@ -1,11 +1,25 @@
-   package mars.mips.instructions;
-   import mars.simulator.*;
-   import mars.mips.hardware.*;
-   import mars.mips.instructions.syscalls.*;
-   import mars.*;
-   import mars.util.*;
-   import java.util.*;
-   import java.io.*;
+package mars.mips.instructions;
+
+import mars.Globals;
+import mars.ProcessingException;
+import mars.ProgramStatement;
+import mars.mips.hardware.AddressErrorException;
+import mars.mips.hardware.Coprocessor0;
+import mars.mips.hardware.Coprocessor1;
+import mars.mips.hardware.RegisterFile;
+import mars.mips.instructions.syscalls.Syscall;
+import mars.simulator.DelayedBranch;
+import mars.simulator.Exceptions;
+import mars.util.Binary;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.StringTokenizer;
 	
 	/*
 Copyright (c) 2003-2013,  Pete Sanderson and Kenneth Vollmar
@@ -1672,7 +1686,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                         round = Integer.MAX_VALUE;
                      } 
                      else {
-                        Float floatObj = new Float(floatValue);
+                         Float floatObj = floatValue;
                         // If we are EXACTLY in the middle, then round to even!  To determine this,
                         // find next higher integer and next lower integer, then see if distances 
                         // are exactly equal.
@@ -1920,7 +1934,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                         round = Integer.MAX_VALUE;
                      } 
                      else {
-                        Double doubleObj = new Double(doubleValue);
+                         Double doubleObj = doubleValue;
                         // If we are EXACTLY in the middle, then round to even!  To determine this,
                         // find next higher integer and next lower integer, then see if distances 
                         // are exactly equal.

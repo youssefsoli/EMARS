@@ -1,9 +1,13 @@
-   package mars.mips.hardware;
-   import mars.*;
-   import mars.util.*;
-   import mars.simulator.*;
-   import mars.mips.instructions.*;
-   import java.util.*;
+package mars.mips.hardware;
+
+import mars.Globals;
+import mars.ProgramStatement;
+import mars.Settings;
+import mars.mips.instructions.Instruction;
+import mars.simulator.Exceptions;
+import mars.util.Binary;
+
+import java.util.*;
 	
 	/*
 Copyright (c) 2003-2009,  Pete Sanderson and Kenneth Vollmar
@@ -768,11 +772,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
             value = fetchWordOrNullFromTable(stackBlockTable, relative);
          }
          else if (inTextSegment(address) || inKernelTextSegment(address)) {
-            try { 
-               value = (getStatementNoNotify(address) == null) ? null : new Integer(getStatementNoNotify(address).getBinaryStatement());
-            } 
-                catch (AddressErrorException aee) { 
-                  value = null;               }
+             try {
+                 value = (getStatementNoNotify(address) == null) ? null : getStatementNoNotify(address).getBinaryStatement();
+             } catch (AddressErrorException aee) {
+                 value = null;
+             }
          }  
          else if (inKernelDataSegment(address)) {
               // in kernel data segment
@@ -1382,7 +1386,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          else {
             value = blockTable[block][offset];
          }
-         return new Integer(value);
+           return value;
       }
    	   
    ////////////////////////////////////////////////////////////////////////////////////

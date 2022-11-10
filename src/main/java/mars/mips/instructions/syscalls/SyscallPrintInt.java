@@ -1,7 +1,9 @@
-   package mars.mips.instructions.syscalls;
-   import mars.util.*;
-   import mars.mips.hardware.*;
-   import mars.*;
+package mars.mips.instructions.syscalls;
+
+import mars.ProcessingException;
+import mars.ProgramStatement;
+import mars.mips.hardware.RegisterFile;
+import mars.util.SystemIO;
 
 /*
 Copyright (c) 2003-2006,  Pete Sanderson and Kenneth Vollmar
@@ -50,7 +52,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
    * Performs syscall function to print on the console the integer stored in $a0.
    */
        public void simulate(ProgramStatement statement) throws ProcessingException {
-         SystemIO.printString(
-             new Integer(RegisterFile.getValue(4)).toString());
-      }
+           SystemIO.printString(
+                   Integer.toString(RegisterFile.getValue(4)));
+       }
    }

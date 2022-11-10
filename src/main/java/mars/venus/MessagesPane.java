@@ -1,15 +1,22 @@
-   package mars.venus;
-   import mars.*;
-   import javax.swing.*;
-   import javax.swing.text.*;
-   import java.awt.*;
-   import java.awt.event.*;
-   import java.util.concurrent.ArrayBlockingQueue;
-   import javax.swing.event.DocumentListener;
-   import javax.swing.undo.UndoableEdit;
-   import mars.simulator.Simulator;
-   import javax.swing.event.DocumentEvent;
-   import javax.swing.text.Position.Bias;
+package mars.venus;
+
+import mars.ErrorList;
+import mars.Globals;
+import mars.simulator.Simulator;
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.NavigationFilter;
+import javax.swing.text.Position.Bias;
+import javax.swing.undo.UndoableEdit;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.concurrent.ArrayBlockingQueue;
 
 /*
 Copyright (c) 2003-2010,  Pete Sanderson and Kenneth Vollmar
@@ -374,20 +381,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
          Asker asker = new Asker(maxLen); // Asker defined immediately below.
          return asker.response();
       }
-   	  
-   	  ////////////////////////////////////////////////////////////////////////////
-   	  // Thread class for obtaining user input in the Run I/O window (MessagesPane)
-   	  // Written by Ricardo Fern·ndez Pascual [rfernandez@ditec.um.es] December 2009.
-       class Asker implements Runnable {
-         ArrayBlockingQueue<String> resultQueue = new ArrayBlockingQueue<String>(1);
-         int initialPos;
-         int maxLen;
-          Asker(int maxLen) {
-            this.maxLen = maxLen;
-                // initialPos will be set in run()
-         }
-         final DocumentListener listener = 
-             new DocumentListener() {
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Thread class for obtaining user input in the Run I/O window (MessagesPane)
+    // Written by Ricardo Fern√°ndez Pascual [rfernandez@ditec.um.es] December 2009.
+    class Asker implements Runnable {
+        ArrayBlockingQueue<String> resultQueue = new ArrayBlockingQueue<String>(1);
+        int initialPos;
+        int maxLen;
+        final DocumentListener listener =
+                new DocumentListener() {
                 public void insertUpdate(final DocumentEvent e) {
                   EventQueue.invokeLater(
                          new Runnable() {
@@ -399,18 +402,18 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                                     int offset = e.getOffset() + i;
                                     if (offset + 1 == e.getDocument().getLength()) {
                                        returnResponse();
-                                    } 
+                                    }
                                     else {
                                         // remove the '\n' and put it at the end
                                        e.getDocument().remove(offset, 1);
                                        e.getDocument().insertString(e.getDocument().getLength(), "\n", null);
                                         // insertUpdate will be called again, since we have inserted the '\n' at the end
                                     }
-                                 } 
+                                 }
                                  else if (maxLen >= 0 && e.getDocument().getLength() - initialPos >= maxLen) {
                                     returnResponse();
                                  }
-                              } 
+                              }
                                   catch (BadLocationException ex) {
                                     returnResponse();
                                  }
@@ -430,6 +433,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                }
                 public void changedUpdate(DocumentEvent e) { }
             };
+
+        Asker(int maxLen) {
+            this.maxLen = maxLen;
+            // initialPos will be set in run()
+        }
          final NavigationFilter navigationFilter = 
              new NavigationFilter() {
                 public void moveDot(FilterBypass fb, int dot, Bias bias) {
