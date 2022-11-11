@@ -1,13 +1,20 @@
 package mars.tools
 
-import mars.mips.hardware.AccessNotice
-import mars.mips.hardware.Memory
-import mars.mips.hardware.MemoryAccessNotice
+import mars.Globals
+import mars.detectRadix
+import mars.mips.hardware.*
+import mars.toHex
 import mars.util.Binary
 import java.awt.*
+import java.awt.BorderLayout.*
+import java.awt.event.KeyEvent
+import java.awt.event.KeyListener
 import java.util.*
 import javax.swing.*
 import javax.swing.border.EmptyBorder
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.collections.HashSet
 
 /*
 Copyright (c) 2010-2011,  Pete Sanderson and Kenneth Vollmar
@@ -49,6 +56,7 @@ class BitmapDisplay : AbstractMarsToolAndApplication
     private lateinit var uiWidthSelector: JComboBox<Int>
     private lateinit var uiHeightSelector: JComboBox<Int>
     private lateinit var uiBaseAddressSelector: JComboBox<String>
+    private lateinit var uiKeyboardCheckbox: JCheckBox
     private lateinit var canvas: JPanel
     private lateinit var results: JPanel
 
@@ -68,7 +76,17 @@ class BitmapDisplay : AbstractMarsToolAndApplication
 
     private val baseAddress get() = baseAddresses[uiBaseAddressSelector.selectedIndex]
 
+    // Keyboard++
+    private var keyboardAddr: UInt = 0xFFFF0010u
+    private var keyboardAttached = false
+    private lateinit var uiKeyboard: JTextField
+
     private lateinit var grid: Grid
+
+    val pooledKeyEvents = hashMapOf<UInt, ArrayList<KeyEvent>>(
+        0x00u to ArrayList(), 0x10u to ArrayList(), 0x20u to ArrayList()
+    )
+    val downKeys = HashSet<Int>()
 
     /**
      * Simple constructor, likely used to run a stand-alone bitmap display tool.
@@ -78,9 +96,9 @@ class BitmapDisplay : AbstractMarsToolAndApplication
      */
     constructor(title: String, heading: String) : super(title, heading)
 
-    constructor() : super("Azalea's Modified Bitmap Display", heading)
+    constructor() : super("Azalea's Bitmap Display++", HEADING)
 
-    override fun getName() = "Bitmap Display"
+    override fun getName() = HEADING
 
     /**
      * Override the inherited method, which registers us as an Observer over the static data segment (starting address
@@ -102,6 +120,7 @@ class BitmapDisplay : AbstractMarsToolAndApplication
             highAddress = -4
         }
         addAsObserver(baseAddress, highAddress)
+        addAsObserver(keyboardAddr.toInt(), (keyboardAddr + 0x20u).toInt())
     }
 
     /**
@@ -127,13 +146,72 @@ class BitmapDisplay : AbstractMarsToolAndApplication
      * Update display when connected MIPS program accesses (data) memory.
      *
      * @param memory the attached memory
-     * @param accessNotice information provided by memory in MemoryAccessNotice object
+     * @param ac information provided by memory in MemoryAccessNotice object
      */
-    override fun processMIPSUpdate(memory: Observable, accessNotice: AccessNotice)
+    override fun processMIPSUpdate(memory: Observable, ac: AccessNotice)
     {
-        if (accessNotice.accessType == AccessNotice.WRITE)
+        if (ac !is MemoryAccessNotice || ac.accessType != AccessNotice.WRITE) return
+        val addr = ac.address.toUInt()
+
+        // For the keyboard
+        if (addr in keyboardAddr..keyboardAddr + 0x30u)
         {
-            updateColorForAddress(accessNotice as MemoryAccessNotice)
+            // Offset 0x01 or 0x11 or 0x21 bytes are for telling the keyboard that the events are received
+            var offset = addr - keyboardAddr
+
+            // Clear the segment
+            if (offset == 0x01u || offset == 0x11u)
+            {
+                if (Globals.memory.getByte(addr.toInt()) != 1) return
+
+                println("Offset written: ${offset.toHex(2)}")
+
+                // Clear bytes if 1 is written to the 0x01 offset
+                offset -= 1u
+                val range = offset..offset + 0x0Fu
+                synchronized(Globals.memoryAndRegistersLock)
+                {
+                    range.map { keyboardAddr + it }.forEach { Globals.memory.setByte(it.toInt(), 0) }
+                }
+                pooledKeyEvents[offset]!!.clear()
+                println("[Keyboard++] Keyboard segment range $range cleared")
+            }
+            return
+        }
+
+        // For the display
+        updateColorForAddress(ac)
+    }
+
+    /**
+     * Event on key press
+     *
+     * @param offset Event type / offset
+     * @param e Event
+     */
+    fun keyEvent(offset: UInt, e: KeyEvent)
+    {
+        if (!keyboardAttached) return
+        println("[Keyboard++] ${e.id} '${e.keyChar}' ${e.keyCode}")
+        val queue = pooledKeyEvents[offset]!!
+
+        // Check for more than 7 key events queued
+        if (queue.size == 7) return
+
+        // Add to queue
+        queue.add(e)
+
+        // Add to memory
+        synchronized(Globals.memoryAndRegistersLock)
+        {
+            // Change 0x0: Number of events
+            var addr = keyboardAddr + offset
+            println("[Keyboard++] Address ${addr.toHex(8)} set to ${queue.size} | ${addr.toHex(8)} set to ${e.keyCode} (${e.keyChar.toHex()})")
+            Globals.memory.setByte(addr.toInt(), queue.size)
+
+            // Set the keycode
+            addr += queue.size.toUInt() * 2u
+            Globals.memory.setHalf(addr.toInt(), e.keyCode)
         }
     }
 
@@ -213,12 +291,10 @@ class BitmapDisplay : AbstractMarsToolAndApplication
     // UI components and layout for left half of GUI, where settings are specified.
     private fun buildOrganizationArea(): JComponent
     {
-        val organization = JPanel(GridLayout(8, 1))
-
         uiUnitWidthSelector = JComboBox(arrayOf(1, 2, 4, 8, 16, 32)).apply {
             isEditable = false
             background = backgroundColor
-            selectedIndex = 2
+            selectedIndex = 1
             toolTipText = "Width in pixels of rectangle representing memory word"
             addActionListener {
                 grid = createNewGrid()
@@ -229,7 +305,7 @@ class BitmapDisplay : AbstractMarsToolAndApplication
         uiUnitHeightSelector = JComboBox(arrayOf(1, 2, 4, 8, 16, 32)).apply {
             isEditable = false
             background = backgroundColor
-            selectedIndex = 2
+            selectedIndex = 1
             toolTipText = "Height in pixels of rectangle representing memory word"
             addActionListener {
                 grid = createNewGrid()
@@ -286,35 +362,100 @@ class BitmapDisplay : AbstractMarsToolAndApplication
             }
         }
 
-        // ALL COMPONENTS FOR "ORGANIZATION" SECTION
-        val unitWidthInPixelsRow = panelWithBorderLayout
-        unitWidthInPixelsRow.border = emptyBorder
-        unitWidthInPixelsRow.add(JLabel("Unit Width in Pixels "), BorderLayout.WEST)
-        unitWidthInPixelsRow.add(uiUnitWidthSelector, BorderLayout.EAST)
-        val unitHeightInPixelsRow = panelWithBorderLayout
-        unitHeightInPixelsRow.border = emptyBorder
-        unitHeightInPixelsRow.add(JLabel("Unit Height in Pixels "), BorderLayout.WEST)
-        unitHeightInPixelsRow.add(uiUnitHeightSelector, BorderLayout.EAST)
-        val widthInPixelsRow = panelWithBorderLayout
-        widthInPixelsRow.border = emptyBorder
-        widthInPixelsRow.add(JLabel("Display Width in Pixels "), BorderLayout.WEST)
-        widthInPixelsRow.add(uiWidthSelector, BorderLayout.EAST)
-        val heightInPixelsRow = panelWithBorderLayout
-        heightInPixelsRow.border = emptyBorder
-        heightInPixelsRow.add(JLabel("Display Height in Pixels "), BorderLayout.WEST)
-        heightInPixelsRow.add(uiHeightSelector, BorderLayout.EAST)
-        val baseAddressRow = panelWithBorderLayout
-        baseAddressRow.border = emptyBorder
-        baseAddressRow.add(JLabel("Base address for display "), BorderLayout.WEST)
-        baseAddressRow.add(uiBaseAddressSelector, BorderLayout.EAST)
+        val uiKeyboardAddress = JTextField(keyboardAddr.toHex(8)).apply {
+            addActionListener {
+                text.toUIntOrNull(text.detectRadix())?.let {
+                    keyboardAddr = it
+                    uiKeyboardCheckbox.isSelected = false
+                }
+            }
+        }
+        val uiKeyboardCheckbox = JCheckBox("Attach Keyboard++", keyboardAttached).apply {
+            addActionListener {
+                keyboardAttached = isSelected
+                if (isSelected)
+                {
+                    deleteAsObserver()
+                    addAsObserver()
+                }
+                pooledKeyEvents.values.forEach { it.clear() }
+            }
+        }
+
+        println("Bitmap Display++ Initialized")
+
+        // Register key listener
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher {
+            if (!(keyboardAttached && uiKeyboard.hasFocus())) return@addKeyEventDispatcher false
+            when (it.id)
+            {
+                KeyEvent.KEY_PRESSED ->
+                {
+                    // Keep track of down keys to avoid the system's key repeat
+                    if (!downKeys.contains(it.keyCode))
+                    {
+                        keyEvent(0x00u, it)
+                        downKeys.add(it.keyCode)
+                    }
+                }
+                KeyEvent.KEY_RELEASED ->
+                {
+                    keyEvent(0x10u, it)
+                    downKeys.remove(it.keyCode)
+                }
+            }
+            true
+        }
+        uiKeyboard = JTextField(2).apply {
+            class KL : KeyListener
+            {
+                override fun keyTyped(e: KeyEvent) {
+                    uiKeyboard.text = ""
+                }
+                override fun keyPressed(e: KeyEvent) {
+                    uiKeyboard.text = ""
+                    // keyEvent(0x0u, e)
+                }
+                override fun keyReleased(e: KeyEvent) {
+                    uiKeyboard.text = ""
+                    // keyEvent(0x10u, e)
+                }
+            }
+
+            addKeyListener(KL())
+        }
 
         // Lay 'em out in the grid...
-        organization.add(unitWidthInPixelsRow)
-        organization.add(unitHeightInPixelsRow)
-        organization.add(widthInPixelsRow)
-        organization.add(heightInPixelsRow)
-        organization.add(baseAddressRow)
-        return organization
+        return JPanel(GridLayout(8, 1)).apply {
+            add(getPanelWithBorderLayout().apply {
+                add(JLabel("Unit Width in Pixels "), WEST)
+                add(uiUnitWidthSelector, EAST)
+            })
+            add(getPanelWithBorderLayout().apply {
+                add(JLabel("Unit Height in Pixels "), WEST)
+                add(uiUnitHeightSelector, EAST)
+            })
+            add(getPanelWithBorderLayout().apply {
+                add(JLabel("Display Width in Pixels "), WEST)
+                add(uiWidthSelector, EAST)
+            })
+            add(getPanelWithBorderLayout().apply {
+                add(JLabel("Display Height in Pixels "), WEST)
+                add(uiHeightSelector, EAST)
+            })
+            add(getPanelWithBorderLayout().apply {
+                add(JLabel("Base address for display "), WEST)
+                add(uiBaseAddressSelector, EAST)
+            })
+            add(getPanelWithBorderLayout().apply {
+                add(uiKeyboardCheckbox, WEST)
+                add(uiKeyboardAddress, EAST)
+            })
+            add(getPanelWithBorderLayout().apply {
+                add(JLabel("To use keyboard, put your cursor here >"), WEST)
+                add(uiKeyboard)
+            })
+        }
     }
 
     // UI components and layout for right half of GUI, the visualization display area.
@@ -332,8 +473,7 @@ class BitmapDisplay : AbstractMarsToolAndApplication
     private fun <T> JComboBox<T>.getInt() = selectedItem!!.toString().toInt()
 
     // Use this for consistent results.
-    private val panelWithBorderLayout: JPanel
-        get() = JPanel(BorderLayout(2, 2))
+    private fun getPanelWithBorderLayout(): JPanel = JPanel(BorderLayout(2, 2)).apply { border = emptyBorder }
 
     // Method to determine grid dimensions based on current control settings.
     // Each grid element corresponds to one visualization unit.
@@ -353,7 +493,8 @@ class BitmapDisplay : AbstractMarsToolAndApplication
         try
         {
             grid.setElement(offset / grid.cols, offset % grid.cols, value)
-        } catch (e: IndexOutOfBoundsException)
+        }
+        catch (e: IndexOutOfBoundsException)
         {
             // If address is out of range for display, do nothing.
         }
@@ -448,8 +589,8 @@ class BitmapDisplay : AbstractMarsToolAndApplication
 
     companion object
     {
-        private const val version = "Version 1.0"
-        private const val heading = "Bitmap Display"
+        private const val VERSION = "Version 1.0"
+        private const val HEADING = "Bitmap Display++"
 
         /**
          * Main provided for pure stand-alone use.  Recommended stand-alone use is to write a driver program that
@@ -459,7 +600,7 @@ class BitmapDisplay : AbstractMarsToolAndApplication
         @JvmStatic
         fun main(args: Array<String>)
         {
-            BitmapDisplay("Bitmap Display stand-alone, " + version, heading).go()
+            BitmapDisplay("Bitmap Display stand-alone, " + VERSION, HEADING).go()
         }
     }
 }
