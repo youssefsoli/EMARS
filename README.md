@@ -4,16 +4,17 @@
 
 **EMARS** (this repo) is Azalea's enhanced version of MARS.
 
-## Changes from Mars 1.4:
+## Changes from Mars 4.5:
 
-### EMARS 1.5
+### EMARS 4.7
 
 * Switched to Gradle build system with Kotlin support
+* Added `--open` option to open a file on start
 
 ## FAQ
 
 **How to run:** Install Java JDK >11 and double-click on the jar.  
-**How to compile:** `gradle build`
+**How to compile:** `gradle shadowJar`
 
 ## License
 [MIT][2]. Chech the [LICENSE][3] file. All the credits go to the original developers.
