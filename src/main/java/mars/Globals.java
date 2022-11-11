@@ -62,7 +62,7 @@ public class Globals
     /**
      * The current MARS version number. Can't wait for "initialize()" call to get it.
      */
-    public static final String version = "4.5";
+    public static final String version = "4.7";
 
     /**
      * MARS copyright years
@@ -132,7 +132,7 @@ public class Globals
     /**
      * Lock variable used at head of synchronized block to guard MIPS memory and registers
      **/
-    public static Object memoryAndRegistersLock = new Object();
+    public static final Object memoryAndRegistersLock = new Object();
 
     /**
      * Flag to determine whether or not to produce internal debugging information.

@@ -41,6 +41,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 public final class Directives
 {
+    private static final ArrayList<Directives> directiveList = new ArrayList<>();
 
     public static final Directives DATA = new Directives(".data", "Subsequent items stored in Data segment at next available address");
 
@@ -85,8 +86,6 @@ public final class Directives
     /*  INCLUDE added by DPS 11 Jan 2013 */
     public static final Directives INCLUDE = new Directives(".include", "Insert the contents of the specified file.  Put filename in quotes.");
 
-    private static final ArrayList directiveList = new ArrayList();
-
     private final String descriptor;
 
     private final String description; // help text
@@ -115,13 +114,11 @@ public final class Directives
 
     public static Directives matchDirective(String str)
     {
-        Directives match;
-        for (int i = 0; i < directiveList.size(); i++)
+        for (Directives directives : directiveList)
         {
-            match = (Directives) directiveList.get(i);
-            if (str.equalsIgnoreCase(match.descriptor))
+            if (str.equalsIgnoreCase(directives.descriptor))
             {
-                return match;
+                return directives;
             }
         }
         return null;
@@ -136,16 +133,16 @@ public final class Directives
      * @return If match is found, returns ArrayList of matching Directives objects, else returns <tt>null</tt>.
      **/
 
-    public static ArrayList prefixMatchDirectives(String str)
+    public static ArrayList<Directives> prefixMatchDirectives(String str)
     {
-        ArrayList matches = null;
+        ArrayList<Directives> matches = null;
         for (int i = 0; i < directiveList.size(); i++)
         {
-            if (((Directives) directiveList.get(i)).descriptor.toLowerCase().startsWith(str.toLowerCase()))
+            if (directiveList.get(i).descriptor.toLowerCase().startsWith(str.toLowerCase()))
             {
                 if (matches == null)
                 {
-                    matches = new ArrayList();
+                    matches = new ArrayList<>();
                 }
                 matches.add(directiveList.get(i));
             }
@@ -158,7 +155,7 @@ public final class Directives
      *
      * @return MIPS Directive
      **/
-    public static ArrayList getDirectiveList()
+    public static ArrayList<Directives> getDirectiveList()
     {
         return directiveList;
     }

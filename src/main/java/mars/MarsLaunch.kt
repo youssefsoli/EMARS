@@ -8,12 +8,12 @@ import mars.util.Binary
 import mars.util.FilenameFinder
 import mars.util.MemoryDump
 import mars.venus.VenusUI
+import net.sourceforge.argparse4j.ArgumentParsers
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.PrintStream
 import java.util.*
-import javax.swing.SwingUtilities
 import kotlin.system.exitProcess
 
 /*
@@ -43,43 +43,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 (MIT license, http://www.opensource.org/licenses/mit-license.html)
  */
-/**
- * Main takes a number of command line arguments.<br></br> Usage:  Mars  [options] filename<br></br> Valid options (not case
- * sensitive, separate by spaces) are:<br></br> a  -- assemble only, do not simulate<br></br> ad  -- both a and d<br></br> ae<n>
- * -- terminate MARS with integer exit code <n> if an assemble error occurs.<br></br> ascii  -- display memory or
- * register contents interpreted as ASCII b  -- brief - do not display register/memory address along with
- * contents<br></br> d  -- print debugging statements<br></br> da  -- both a and d<br></br> db  -- MIPS delayed branching is
- * enabled.<br></br> dec  -- display memory or register contents in decimal.<br></br> dump  -- dump memory contents to file.
- * Option has 3 arguments, e.g. <br></br>
- * <tt>dump &lt;segment&gt; &lt;format&gt; &lt;file&gt;</tt>.  Also supports<br></br>
- * an address range (see *m-n* below).  Current supported <br></br> segments are <tt>.text</tt> and <tt>.data</tt>.
- * Current supported dump formats <br></br> are <tt>Binary</tt>, <tt>HexText</tt>, <tt>BinaryText</tt>.<br></br> h  -- display
- * help.  Use by itself and with no filename hex  -- display memory or register contents in hexadecimal
- * (default)<br></br> ic  -- display count of MIPS basic instructions 'executed'"); mc  -- set memory configuration.
- * Option has 1 argument, e.g.<br></br>
- * <tt>mc &lt;config$gt;</tt>, where &lt;config$gt; is <tt>Default</tt><br></br>
- * for the MARS default 32-bit address space, <tt>CompactDataAtZero</tt> for<br></br> a 32KB address space with data
- * segment at address 0, or <tt>CompactTextAtZero</tt><br></br> for a 32KB address space with text segment at address
- * 0.<br></br> me  -- display MARS messages to standard err instead of standard out. Can separate via redirection.
- * nc  -- do not display copyright notice (for cleaner redirected/piped output). np  -- No Pseudo-instructions
- * allowed ("ne" will work also).<br></br> p  -- Project mode - assemble all files in the same directory as given
- * file.<br></br> se<n>  -- terminate MARS with integer exit code <n> if a simulation (run) error occurs.<br></br> sm  --
- * Start execution at Main - Execution will start at program statement globally labeled main.<br></br> smc  -- Self
- * Modifying Code - Program can write and branch to either text or data segment<br></br> we  -- assembler Warnings will
- * be considered Errors<br></br>
- * <n>  -- where <n> is an integer maximum count of steps to simulate.<br></br>
- * If 0, negative or not specified, there is no maximum.<br></br> $<reg>  -- where <reg> is number or name (e.g. 5, t3,
- * f10) of register whose <br></br> content to display at end of run.  Option may be repeated.<br></br>
- * <reg_name>  -- where <reg_name> is name (e.g. t3, f10) of register whose <br></br>
- * content to display at end of run.  Option may be repeated. $ not required.<br></br>
- * <m>-<n>  -- memory address range from <m> to <n> whose contents to<br></br>
- * display at end of run. <m> and <n> may be hex or decimal,<br></br>
- * <m> <= <n>, both must be on word boundary.  Option may be repeated.<br></br>
- * pa  -- Program Arguments follow in a space-separated list.  This<br></br> option must be placed AFTER ALL FILE NAMES,
- * because everything<br></br> that follows it is interpreted as a program argument to be<br></br> made available to the MIPS
- * program at runtime.<br></br></n></m></n></m></n></m></n></m></reg_name></reg_name></reg></reg></n></n></n></n></n></n> 
- */
-class MarsLaunch(args: Array<String>)
+class MarsLaunch(var args: Array<String>)
 {
     private var simulate = true
     private var displayFormat = HEXADECIMAL
@@ -134,11 +98,27 @@ class MarsLaunch(args: Array<String>)
 
     init
     {
-        val gui = args.isEmpty()
+        // Start gui if "cmd" argument is not specified
+        val gui = !args.contains("cmd")
+        args = args.filter { it != "cmd" }.toTypedArray()
+
         Globals.initialize(gui)
         if (gui)
         {
-            launchIDE()
+            val p = ArgumentParsers.newFor("E-MARS GUI Arguments").build()
+                .defaultHelp(true)
+                .description("GUI Arguments for Azalea's Extended-MARS. Add 'cmd' argument for command-line usage")
+
+            val open by p.string("-o", "--open", help = "Open a file on start")
+            val runOnOpen by p.flag("--run-on-open", help = "Assemble and run a file when it's opened")
+            p.parseToVars(args)
+
+            // Start IDE
+            val ui = VenusUI("MARS " + Globals.version)
+
+            open?.let {
+                ui.editor.editTabbedPane.openFile(File(it))
+            }
         } 
         else
         {
@@ -231,17 +211,6 @@ class MarsLaunch(args: Array<String>)
                 out.println("Error while attempting to save dump, file $file!  Disk IO failed!")
                 continue
             }
-        }
-    }
-
-    /////////////////////////////////////////////////////////////////
-    // There are no command arguments, so run in interactive mode by
-    // launching the GUI-fronted integrated development environment.
-    private fun launchIDE()
-    {
-        SwingUtilities.invokeLater { // Turn off metal's use of bold fonts
-            // UIManager.put("swing.boldMetal", Boolean.FALSE);
-            VenusUI("MARS " + Globals.version)
         }
     }
 
@@ -373,15 +342,6 @@ class MarsLaunch(args: Array<String>)
                 i++
                 continue
             }
-            if (args[i].equals("ad", ignoreCase = true) ||
-                args[i].equals("da", ignoreCase = true)
-            )
-            {
-                Globals.debug = true
-                simulate = false
-                i++
-                continue
-            }
             if (args[i].equals("p", ignoreCase = true))
             {
                 assembleProject = true
@@ -473,7 +433,7 @@ class MarsLaunch(args: Array<String>)
             }
             if (File(args[i]).exists())
             {  // is it a file name?
-                filenameList!!.add(args[i])
+                filenameList.add(args[i])
                 i++
                 continue
             }
@@ -687,12 +647,7 @@ class MarsLaunch(args: Array<String>)
     {
         if (countInstructions)
         {
-            out.println(
-                """
-    
-    $instructionCount
-    """.trimIndent()
-            )
+            out.println("\n\n$instructionCount")
         }
     }
 
@@ -701,7 +656,6 @@ class MarsLaunch(args: Array<String>)
     private fun displayRegistersPostMortem()
     {
         var value: Int // handy local to use throughout the next couple loops
-        var strValue: String
         // Display requested register contents
         out.println()
         val regIter: Iterator<String> = registerDisplayList.iterator()
@@ -808,7 +762,7 @@ class MarsLaunch(args: Array<String>)
     {
         var value: Int
         // Display requested memory range contents
-        val memIter: Iterator<String?> = memoryDisplayList!!.iterator()
+        val memIter: Iterator<String?> = memoryDisplayList.iterator()
         var addressStart = 0
         var addressEnd = 0
         while (memIter.hasNext())

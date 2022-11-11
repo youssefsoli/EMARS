@@ -56,7 +56,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 public class InstructionSet
 {
-    private final ArrayList instructionList;
+    private final ArrayList<Instruction> instructionList;
 
     private ArrayList opcodeMatchMaps;
 
@@ -67,14 +67,14 @@ public class InstructionSet
      */
     public InstructionSet()
     {
-        instructionList = new ArrayList();
+        instructionList = new ArrayList<>();
 
     }
 
     /**
      * Retrieve the current instruction set.
      */
-    public ArrayList getInstructionList()
+    public ArrayList<Instruction> getInstructionList()
     {
         return instructionList;
 

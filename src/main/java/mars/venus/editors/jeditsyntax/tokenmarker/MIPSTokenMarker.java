@@ -101,16 +101,16 @@ public class MIPSTokenMarker extends TokenMarker
         {
             cKeywords = new KeywordMap(false);
             // add Instruction mnemonics
-            java.util.ArrayList instructionSet = mars.Globals.instructionSet.getInstructionList();
+            ArrayList<Instruction> instructionSet = mars.Globals.instructionSet.getInstructionList();
             for (int i = 0; i < instructionSet.size(); i++)
             {
-                cKeywords.add(((mars.mips.instructions.Instruction) instructionSet.get(i)).getName(), Token.KEYWORD1);
+                cKeywords.add(instructionSet.get(i).getName(), Token.KEYWORD1);
             }
             // add assembler directives
-            java.util.ArrayList directiveSet = mars.assembler.Directives.getDirectiveList();
+            ArrayList<Directives> directiveSet = mars.assembler.Directives.getDirectiveList();
             for (int i = 0; i < directiveSet.size(); i++)
             {
-                cKeywords.add(((mars.assembler.Directives) directiveSet.get(i)).getName(), Token.KEYWORD2);
+                cKeywords.add(directiveSet.get(i).getName(), Token.KEYWORD2);
             }
             // add integer register file
             mars.mips.hardware.Register[] registerFile = mars.mips.hardware.RegisterFile.getRegisters();

@@ -47,7 +47,7 @@ public class Editor
 
     private final VenusUI mainUI;
 
-    private EditTabbedPane editTabbedPane;
+    public EditTabbedPane editTabbedPane;
 
     private final String mainUIbaseTitle;
 
