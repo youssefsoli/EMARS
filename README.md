@@ -12,6 +12,7 @@
 * Added `--open` command-line option to open a file on start
 * Added **Keyboard++**: Enhanced keyboard events
 * Refactored many classes in Kotlin
+* A LOT of [optimizations](https://github.com/hykilpikonna/EMARS#optimizations)
 
 ## FAQ
 
@@ -408,6 +409,7 @@ UNDEFINED      = 0x0
 
 In MARS, the BitmapDisplay [re-draws the entire canvas](https://github.com/thomasrussellmurphy/MARS_Assembler/blob/c21dd72e8d2e4a51eb24e276c3f39ef1789148f2/mars/tools/BitmapDisplay.java#L496) instead of only the updated pixels whenever any memory address is updated. This makes updating the display very very very slow, taking 12% of all run time.
 
+![image](https://user-images.githubusercontent.com/22280294/201498543-02a74fb4-9f55-45c8-8eaf-6f1531ab02bd.png)
 
 
 For example, if I loop through the display and change every pixel in my assembly code, the original running time of h∗w will now take h2∗w2, making it take around one second for each update.
@@ -416,6 +418,7 @@ Since I can’t easily draw one pixel on update without manual manipulation of A
 
 After optimizing for this, it runs faster but still not enough for the animation to be smooth. Then, I discovered that most of the running time is used by the backstepper and notifying observers for changes in registers and memory:
 
+![image](https://user-images.githubusercontent.com/22280294/201498548-1e8712ef-79d6-45e9-9d22-096148185c64.png)
 
 
 By default, MARS will store backstep register file copies each time a register is updated, which takes a lot of time since registers are updated very frequently. So I removed backstepping when the execution speed limit is not set. MARS also notifies all memory observers when a program statement instruction is read from memory, which I also removed because nothing uses the notification from reading program statements.
