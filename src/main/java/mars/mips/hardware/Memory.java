@@ -3,7 +3,6 @@ package mars.mips.hardware;
 import mars.Globals;
 import mars.ProgramStatement;
 import mars.Settings;
-import mars.mips.instructions.Instruction;
 import mars.simulator.Exceptions;
 import mars.util.Binary;
 
@@ -571,7 +570,7 @@ public class Memory extends Observable
 
             if (Globals.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED))
             {
-                ProgramStatement oldStatement = getStatementNoNotify(address);
+                ProgramStatement oldStatement = getStatement(address);
                 if (oldStatement != null)
                 {
                     oldValue = oldStatement.getBinaryStatement();
@@ -650,7 +649,7 @@ public class Memory extends Observable
             // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
             if (Globals.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED))
             {
-                ProgramStatement oldStatement = getStatementNoNotify(address);
+                ProgramStatement oldStatement = getStatement(address);
                 if (oldStatement != null)
                 {
                     oldValue = oldStatement.getBinaryStatement();
@@ -861,11 +860,11 @@ public class Memory extends Observable
         }
         else if (inTextSegment(address))
         {
-            // Burch Mod (Jan 2013): replace throw with calls to getStatementNoNotify & getBinaryStatement
+            // Burch Mod (Jan 2013): replace throw with calls to getStatement & getBinaryStatement
             // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
             if (Globals.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED))
             {
-                ProgramStatement stmt = getStatementNoNotify(address);
+                ProgramStatement stmt = getStatement(address);
                 value = stmt == null ? 0 : stmt.getBinaryStatement();
             }
             else
@@ -947,11 +946,11 @@ public class Memory extends Observable
         }
         else if (inTextSegment(address))
         {
-            // Burch Mod (Jan 2013): replace throw with calls to getStatementNoNotify & getBinaryStatement
+            // Burch Mod (Jan 2013): replace throw with calls to getStatement & getBinaryStatement
             // DPS adaptation 5-Jul-2013: either throw or call, depending on setting
             if (Globals.getSettings().getBooleanSetting(Settings.SELF_MODIFYING_CODE_ENABLED))
             {
-                ProgramStatement stmt = getStatementNoNotify(address);
+                ProgramStatement stmt = getStatement(address);
                 value = stmt == null ? 0 : stmt.getBinaryStatement();
             }
             else
@@ -1028,7 +1027,7 @@ public class Memory extends Observable
         {
             try
             {
-                value = (getStatementNoNotify(address) == null) ? null : getStatementNoNotify(address).getBinaryStatement();
+                value = (getStatement(address) == null) ? null : getStatement(address).getBinaryStatement();
             }
             catch (AddressErrorException aee)
             {
@@ -1139,68 +1138,12 @@ public class Memory extends Observable
         return get(address, 1);
     }
 
-    /**
-     * Gets ProgramStatement from Text Segment.
-     *
-     * @param address Starting address of Memory address to be read.  Must be word boundary.
-     * @return reference to ProgramStatement object associated with that address, or null if none.
-     * @throws AddressErrorException If address is not on word boundary or is outside Text Segment.
-     * @see ProgramStatement
-     **/
-
-    public ProgramStatement getStatement(int address) throws AddressErrorException
-    {
-        return getStatement(address, true);
-      	/*
-         if (address % 4 != 0 || !(inTextSegment(address) || inKernelTextSegment(address))) {
-            throw new AddressErrorException(
-               "fetch address for text segment out of range or not aligned to word boundary ",
-               Exceptions.ADDRESS_EXCEPTION_LOAD, address);
-         }
-         if (inTextSegment(address)) {
-            return readProgramStatement(address, textBaseAddress, textBlockTable, true);
-         }
-         else {
-            return readProgramStatement(address, kernelTextBaseAddress, kernelTextBlockTable,true);
-         }
-      	*/
-    }
-
-
     ///////////////////////////////////////////////////////////////////////////
     //  ALL THE OBSERVABLE STUFF GOES HERE.  FOR COMPATIBILITY, Memory IS STILL
     //  EXTENDING OBSERVABLE, BUT WILL NOT USE INHERITED METHODS.  WILL INSTEAD
     //  USE A COLLECTION OF MemoryObserver OBJECTS, EACH OF WHICH IS COMBINATION
     //  OF AN OBSERVER WITH AN ADDRESS RANGE.
-
-    /**
-     * Gets ProgramStatement from Text Segment without notifying observers.
-     *
-     * @param address Starting address of Memory address to be read.  Must be word boundary.
-     * @return reference to ProgramStatement object associated with that address, or null if none.
-     * @throws AddressErrorException If address is not on word boundary or is outside Text Segment.
-     * @see ProgramStatement
-     **/
-
-    public ProgramStatement getStatementNoNotify(int address) throws AddressErrorException
-    {
-        return getStatement(address, false);
-      	/*
-         if (address % 4 != 0 || !(inTextSegment(address) || inKernelTextSegment(address))) {
-            throw new AddressErrorException(
-               "fetch address for text segment out of range or not aligned to word boundary ",
-               Exceptions.ADDRESS_EXCEPTION_LOAD, address);
-         }
-         if (inTextSegment(address)) {
-            return readProgramStatement(address, textBaseAddress, textBlockTable, false);
-         }
-         else {
-            return readProgramStatement(address, kernelTextBaseAddress, kernelTextBlockTable, false);
-         }
-      	*/
-    }
-
-    private ProgramStatement getStatement(int address, boolean notify) throws AddressErrorException
+    public ProgramStatement getStatement(int address) throws AddressErrorException
     {
         if (!wordAligned(address))
         {
@@ -1217,11 +1160,11 @@ public class Memory extends Observable
         }
         if (inTextSegment(address))
         {
-            return readProgramStatement(address, textBaseAddress, textBlockTable, notify);
+            return readProgramStatement(address, textBaseAddress, textBlockTable);
         }
         else if (inKernelTextSegment(address))
         {
-            return readProgramStatement(address, kernelTextBaseAddress, kernelTextBlockTable, notify);
+            return readProgramStatement(address, kernelTextBaseAddress, kernelTextBlockTable);
         }
         else
         {
@@ -1601,7 +1544,7 @@ public class Memory extends Observable
     // as valid.  It may be either in user or kernel text segment, as specified by arguments.
     // Returns associated ProgramStatement or null if none.
     // Last parameter controls whether or not observers will be notified.
-    private ProgramStatement readProgramStatement(int address, int baseAddress, ProgramStatement[][] blockTable, boolean notify)
+    private ProgramStatement readProgramStatement(int address, int baseAddress, ProgramStatement[][] blockTable)
     {
         int relative = (address - baseAddress) >> 2; // convert byte address to words
         int block = relative / TEXT_BLOCK_LENGTH_WORDS;
@@ -1611,24 +1554,12 @@ public class Memory extends Observable
             if (blockTable[block] == null || blockTable[block][offset] == null)
             {
                 // No instructions are stored in this block or offset.
-                if (notify)
-                {
-                    notifyAnyObservers(AccessNotice.READ, address, Instruction.INSTRUCTION_LENGTH, 0);
-                }
                 return null;
             }
             else
             {
-                if (notify)
-                {
-                    notifyAnyObservers(AccessNotice.READ, address, Instruction.INSTRUCTION_LENGTH, blockTable[block][offset].getBinaryStatement());
-                }
                 return blockTable[block][offset];
             }
-        }
-        if (notify)
-        {
-            notifyAnyObservers(AccessNotice.READ, address, Instruction.INSTRUCTION_LENGTH, 0);
         }
         return null;
     }

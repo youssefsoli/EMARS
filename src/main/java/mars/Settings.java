@@ -2,6 +2,7 @@ package mars;
 
 import mars.util.Binary;
 import mars.util.EditorFont;
+import mars.venus.RunSpeedPanel;
 import mars.venus.editors.jeditsyntax.SyntaxStyle;
 import mars.venus.editors.jeditsyntax.SyntaxUtilities;
 
@@ -448,7 +449,7 @@ public class Settings extends Observable
      */
     public boolean getBackSteppingEnabled()
     {
-        return (Globals.program != null && Globals.program.getBackStepper() != null && Globals.program.getBackStepper().enabled());
+        return RunSpeedPanel.getInstance().getRunSpeed() != RunSpeedPanel.UNLIMITED_SPEED;
     }
 
     /**

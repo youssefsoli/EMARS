@@ -13,7 +13,6 @@ import java.util.*
 import javax.swing.*
 import javax.swing.border.EmptyBorder
 import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 
 /*
@@ -51,10 +50,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 class BitmapDisplay : AbstractMarsToolAndApplication
 {
     // Major GUI components
-    private lateinit var uiUnitWidthSelector: JComboBox<Int>
-    private lateinit var uiUnitHeightSelector: JComboBox<Int>
-    private lateinit var uiWidthSelector: JComboBox<Int>
-    private lateinit var uiHeightSelector: JComboBox<Int>
     private lateinit var uiBaseAddressSelector: JComboBox<String>
     private lateinit var uiKeyboardCheckbox: JCheckBox
     private lateinit var canvas: JPanel
@@ -65,10 +60,10 @@ class BitmapDisplay : AbstractMarsToolAndApplication
     private val backgroundColor = Color.WHITE
 
     // Values for display canvas.  Note their initialization uses the identifiers just above.
-    private val unitWidth get() = uiUnitWidthSelector.getInt()
-    private val unitHeight get() = uiUnitHeightSelector.getInt()
-    private val displayWidth get() = uiWidthSelector.getInt()
-    private val displayHeight get() = uiHeightSelector.getInt()
+    private var unitWidth: Int = 2
+    private var unitHeight: Int = 2
+    private var displayWidth: Int = 512
+    private var displayHeight: Int = 256
     private val displayDimension get() = Dimension(displayWidth, displayHeight)
 
     private val baseAddresses = intArrayOf(Memory.dataSegmentBaseAddress, Memory.globalPointer, Memory.dataBaseAddress,
@@ -78,6 +73,7 @@ class BitmapDisplay : AbstractMarsToolAndApplication
 
     // Keyboard++
     private var keyboardAddr: UInt = 0xFFFF0010u
+    private var displayUpdateAddr: UInt = 0xFFFF0008u
     private var keyboardAttached = false
     private lateinit var uiKeyboard: JTextField
 
@@ -180,7 +176,17 @@ class BitmapDisplay : AbstractMarsToolAndApplication
         }
 
         // For the display
-        updateColorForAddress(ac)
+        val value = ac.value
+        val offset = ((addr - baseAddress.toUInt()) / 4u).toInt()
+        try
+        {
+            grid.setElement(offset / grid.cols, offset % grid.cols, value)
+        }
+        catch (e: IndexOutOfBoundsException)
+        {
+            // If address is out of range for display, do nothing.
+        }
+        if (offset == 0) canvas.repaint()
     }
 
     /**
@@ -239,16 +245,9 @@ class BitmapDisplay : AbstractMarsToolAndApplication
      */
     override fun reset()
     {
-        resetCounts()
-        updateDisplay()
+        grid.reset()
+        canvas.repaint()
     }
-
-    /**
-     * Updates display immediately after each update (AccessNotice) is processed, after display configuration changes as
-     * needed, and after each execution step when Mars is running in timed mode.  Overrides inherited method that does
-     * nothing.
-     */
-    override fun updateDisplay() = canvas.repaint()
 
     /**
      * Overrides default method, to provide a Help button for this tool/app.
@@ -291,51 +290,55 @@ class BitmapDisplay : AbstractMarsToolAndApplication
     // UI components and layout for left half of GUI, where settings are specified.
     private fun buildOrganizationArea(): JComponent
     {
-        uiUnitWidthSelector = JComboBox(arrayOf(1, 2, 4, 8, 16, 32)).apply {
+        val uiUnitWidthSelector = JComboBox(arrayOf(1, 2, 4, 8, 16, 32)).apply {
             isEditable = false
             background = backgroundColor
             selectedIndex = 1
             toolTipText = "Width in pixels of rectangle representing memory word"
             addActionListener {
+                unitWidth = getInt()
                 grid = createNewGrid()
-                updateDisplay()
+                reset()
             }
         }
 
-        uiUnitHeightSelector = JComboBox(arrayOf(1, 2, 4, 8, 16, 32)).apply {
+        val uiUnitHeightSelector = JComboBox(arrayOf(1, 2, 4, 8, 16, 32)).apply {
             isEditable = false
             background = backgroundColor
             selectedIndex = 1
             toolTipText = "Height in pixels of rectangle representing memory word"
             addActionListener {
+                unitHeight = getInt()
                 grid = createNewGrid()
-                updateDisplay()
+                reset()
             }
         }
 
-        uiWidthSelector = JComboBox(arrayOf(64, 128, 256, 512, 1024)).apply {
+        val uiWidthSelector = JComboBox(arrayOf(64, 128, 256, 512, 1024)).apply {
             isEditable = false
             background = backgroundColor
             selectedIndex = 3
             toolTipText = "Total width in pixels of display area"
             addActionListener {
+                displayWidth = getInt()
                 canvas.preferredSize = displayDimension
                 canvas.size = displayDimension
                 grid = createNewGrid()
-                updateDisplay()
+                reset()
             }
         }
 
-        uiHeightSelector = JComboBox(arrayOf(64, 128, 256, 512, 1024)).apply {
+        val uiHeightSelector = JComboBox(arrayOf(64, 128, 256, 512, 1024)).apply {
             isEditable = false
             background = backgroundColor
             selectedIndex = 2
             toolTipText = "Total height in pixels of display area"
             addActionListener {
+                displayHeight = getInt()
                 canvas.preferredSize = displayDimension
                 canvas.size = displayDimension
                 grid = createNewGrid()
-                updateDisplay()
+                reset()
             }
         }
 
@@ -358,7 +361,7 @@ class BitmapDisplay : AbstractMarsToolAndApplication
                     addAsObserver()
                 }
                 grid = createNewGrid()
-                updateDisplay()
+                reset()
             }
         }
 
@@ -467,9 +470,6 @@ class BitmapDisplay : AbstractMarsToolAndApplication
         return canvas
     }
 
-    // reset all counters in the Grid.
-    private fun resetCounts() = grid.reset()
-
     private fun <T> JComboBox<T>.getInt() = selectedItem!!.toString().toInt()
 
     // Use this for consistent results.
@@ -482,22 +482,6 @@ class BitmapDisplay : AbstractMarsToolAndApplication
         val rows = displayHeight / unitHeight
         val columns = displayWidth / unitWidth
         return Grid(rows, columns)
-    }
-
-    // Given memory address, update color for the corresponding grid element.
-    private fun updateColorForAddress(notice: MemoryAccessNotice)
-    {
-        val address = notice.address
-        val value = notice.value
-        val offset = (address - baseAddress) / Memory.WORD_LENGTH_BYTES
-        try
-        {
-            grid.setElement(offset / grid.cols, offset % grid.cols, value)
-        }
-        catch (e: IndexOutOfBoundsException)
-        {
-            // If address is out of range for display, do nothing.
-        }
     }
 
     //////////////////////////////////////////////////////////////////////////////////////

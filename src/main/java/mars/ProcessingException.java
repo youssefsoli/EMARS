@@ -79,7 +79,7 @@ public class ProcessingException extends Exception
     {
         errs = new ErrorList();
         errs.add(new ErrorMessage(ps, "Runtime exception at " +
-            Binary.intToHexString(RegisterFile.getProgramCounter() - Instruction.INSTRUCTION_LENGTH) +
+            Binary.intToHexString(RegisterFile.getPc() - Instruction.INSTRUCTION_LENGTH) +
             ": " + m));
         // Stopped using ps.getAddress() because of pseudo-instructions.  All instructions in
         // the macro expansion point to the same ProgramStatement, and thus all will return the

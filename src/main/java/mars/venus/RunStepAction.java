@@ -126,7 +126,7 @@ public class RunStepAction extends GuiAction
             FileStatus.set(FileStatus.TERMINATED); // should be redundant.
             executePane.getTextSegmentWindow().setCodeHighlighting(true);
             executePane.getTextSegmentWindow().unhighlightAllSteps();
-            executePane.getTextSegmentWindow().highlightStepAtAddress(RegisterFile.getProgramCounter() - 4);
+            executePane.getTextSegmentWindow().highlightStepAtAddress(RegisterFile.getPc() - 4);
         }
         VenusUI.setReset(false);
     }

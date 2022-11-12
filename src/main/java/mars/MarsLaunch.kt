@@ -669,7 +669,7 @@ class MarsLaunch(var args: Array<String>)
                 {
                     out.print(reg + "\t")
                 }
-                value = RegisterFile.getUserRegister(reg).value
+                value = RegisterFile.getUserRegister(reg)!!.value
                 out.println(formatIntForDisplay(value))
             } else
             {

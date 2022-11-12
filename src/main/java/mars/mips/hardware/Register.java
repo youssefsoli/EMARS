@@ -45,7 +45,7 @@ public class Register extends Observable
 
     private int resetValue;
 
-    // volatile should be enough to allow safe multi-threaded access
+    // volatile should be enough to allow safe multithreaded access
     // w/o the use of synchronized methods.  getValue and setValue
     // are the only methods here used by the register collection
     // (RegisterFile, Coprocessor0, Coprocessor1) methods.
@@ -86,19 +86,6 @@ public class Register extends Observable
 
     public synchronized int getValue()
     {
-        notifyAnyObservers(AccessNotice.READ);
-        return value;
-    }
-
-
-    /**
-     * Returns the value of the Register.  Observers are not notified. Added for release 3.8.
-     *
-     * @return value The value of the Register.
-     */
-
-    public synchronized int getValueNoNotify()
-    {
         return value;
     }
 
@@ -136,7 +123,6 @@ public class Register extends Observable
     {
         int old = value;
         value = val;
-        notifyAnyObservers(AccessNotice.WRITE);
         return old;
     }
 
@@ -157,18 +143,4 @@ public class Register extends Observable
     {
         resetValue = reset;
     }
-
-    //
-    // Method to notify any observers of register operation that has just occurred.
-    //
-    private void notifyAnyObservers(int type)
-    {
-        if (this.countObservers() > 0)
-        {// && Globals.program != null) && Globals.program.inSteppedExecution()) {
-            this.setChanged();
-            this.notifyObservers(new RegisterAccessNotice(type, this.name));
-        }
-    }
-
-
 }

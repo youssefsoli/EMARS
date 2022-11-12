@@ -9,7 +9,6 @@ import mars.mips.hardware.MemoryAccessNotice;
 import mars.mips.instructions.BasicInstruction;
 import mars.mips.instructions.BasicInstructionFormat;
 import mars.venus.RunAssembleAction;
-import mars.venus.RunBackstepAction;
 import mars.venus.RunStepAction;
 import mars.venus.VenusUI;
 import org.w3c.dom.Document;
@@ -312,11 +311,6 @@ public class MipsXray extends AbstractMarsToolAndApplication
                 new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath + "StepForward22.png"))),
                 "Run one step at a time", Integer.valueOf(KeyEvent.VK_T),
                 KeyStroke.getKeyStroke(KeyEvent.VK_F7, 0),
-                mainUI);
-            runBackstepAction = new RunBackstepAction("Backstep",
-                new ImageIcon(tk.getImage(cs.getResource(Globals.imagesPath + "StepBack22.png"))),
-                "Undo the last step", Integer.valueOf(KeyEvent.VK_B),
-                KeyStroke.getKeyStroke(KeyEvent.VK_F8, 0),
                 mainUI);
         }
         catch (Exception e)

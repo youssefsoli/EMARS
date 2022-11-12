@@ -222,7 +222,7 @@ public class BackStepper
     private int pc()
     {
         // PC incremented prior to instruction simulation, so need to adjust for that.
-        return RegisterFile.getProgramCounter() - Instruction.INSTRUCTION_LENGTH;
+        return RegisterFile.getPc() - Instruction.INSTRUCTION_LENGTH;
     }
 
     /**
@@ -406,7 +406,7 @@ public class BackStepper
                 // Client does not have direct access to program statement, and rather than making all
                 // of them go through the methods below to obtain it, we will do it here.
                 // Want the program statement but do not want observers notified.
-                ps = Globals.memory.getStatementNoNotify(programCounter);
+                ps = Globals.memory.getStatement(programCounter);
             }
             catch (Exception e)
             {

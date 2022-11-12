@@ -410,7 +410,7 @@ public class MIPSprogram
     {
         steppedExecution = false;
         Simulator sim = Simulator.getInstance();
-        return sim.simulate(this, RegisterFile.getProgramCounter(), maxSteps, breakPoints, a);
+        return sim.simulate(this, RegisterFile.getPc(), maxSteps, breakPoints, a);
     }
 
 
@@ -426,7 +426,7 @@ public class MIPSprogram
     {
         steppedExecution = true;
         Simulator sim = Simulator.getInstance();
-        boolean done = sim.simulate(this, RegisterFile.getProgramCounter(), 1, null, a);
+        boolean done = sim.simulate(this, RegisterFile.getPc(), 1, null, a);
         return done;
     }
 

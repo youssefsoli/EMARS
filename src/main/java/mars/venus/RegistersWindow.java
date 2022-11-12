@@ -117,7 +117,7 @@ public class RegistersWindow extends JPanel implements Observer
         }
         tableData[32][0] = "pc";
         tableData[32][1] = "";//new Integer(32);
-        tableData[32][2] = NumberDisplayBaseChooser.formatUnsignedInteger(RegisterFile.getProgramCounter(), valueBase);
+        tableData[32][2] = NumberDisplayBaseChooser.formatUnsignedInteger(RegisterFile.getPc(), valueBase);
 
         tableData[33][0] = "hi";
         tableData[33][1] = "";//new Integer(33);
@@ -184,7 +184,7 @@ public class RegistersWindow extends JPanel implements Observer
         {
             updateRegisterValue(registers[i].getNumber(), registers[i].getValue(), base);
         }
-        updateRegisterUnsignedValue(32, RegisterFile.getProgramCounter(), base);
+        updateRegisterUnsignedValue(32, RegisterFile.getPc(), base);
         updateRegisterValue(33, RegisterFile.getValue(33), base);
         updateRegisterValue(34, RegisterFile.getValue(34), base);
     }
@@ -227,6 +227,7 @@ public class RegistersWindow extends JPanel implements Observer
                 // or stepped mode.
                 if (notice.getRunSpeed() != RunSpeedPanel.UNLIMITED_SPEED || notice.getMaxSteps() == 1)
                 {
+                    System.out.println("Running in timed mode");
                     RegisterFile.addRegistersObserver(this);
                     this.highlighting = true;
                 }

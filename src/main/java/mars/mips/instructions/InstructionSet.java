@@ -1239,7 +1239,7 @@ public class InstructionSet
                     {
                         int[] operands = statement.getOperands();
                         processJump(
-                            ((RegisterFile.getProgramCounter() & 0xF0000000)
+                            ((RegisterFile.getPc() & 0xF0000000)
                                 | (operands[0] << 2)));
                     }
                 }));
@@ -1268,7 +1268,7 @@ public class InstructionSet
                         int[] operands = statement.getOperands();
                         processReturnAddress(31);// RegisterFile.updateRegister(31, RegisterFile.getProgramCounter());
                         processJump(
-                            (RegisterFile.getProgramCounter() & 0xF0000000)
+                            (RegisterFile.getPc() & 0xF0000000)
                                 | (operands[0] << 2));
                     }
                 }));
@@ -3442,13 +3442,13 @@ public class InstructionSet
         if (Globals.getSettings().getDelayedBranchingEnabled())
         {
             // Register the branch target address (absolute byte address).
-            DelayedBranch.register(RegisterFile.getProgramCounter() + (displacement << 2));
+            DelayedBranch.register(RegisterFile.getPc() + (displacement << 2));
         }
         else
         {
             // Decrement needed because PC has already been incremented
             RegisterFile.setProgramCounter(
-                RegisterFile.getProgramCounter()
+                RegisterFile.getPc()
                     + (displacement << 2)); // - Instruction.INSTRUCTION_LENGTH);
         }
     }
@@ -3489,7 +3489,7 @@ public class InstructionSet
 
     private void processReturnAddress(int register)
     {
-        RegisterFile.updateRegister(register, RegisterFile.getProgramCounter() +
+        RegisterFile.updateRegister(register, RegisterFile.getPc() +
             ((Globals.getSettings().getDelayedBranchingEnabled()) ?
                 Instruction.INSTRUCTION_LENGTH : 0));
     }

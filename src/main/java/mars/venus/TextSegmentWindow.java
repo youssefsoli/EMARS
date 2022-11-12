@@ -577,7 +577,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer
      */
     public void highlightStepAtPC()
     {
-        highlightStepAtAddress(RegisterFile.getProgramCounter(), false);
+        highlightStepAtAddress(RegisterFile.getPc(), false);
     }
 
     /**
@@ -589,7 +589,7 @@ public class TextSegmentWindow extends JInternalFrame implements Observer
      */
     public void highlightStepAtPC(boolean inDelaySlot)
     {
-        highlightStepAtAddress(RegisterFile.getProgramCounter(), inDelaySlot);
+        highlightStepAtAddress(RegisterFile.getPc(), inDelaySlot);
     }
 
     /**
