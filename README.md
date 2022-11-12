@@ -18,6 +18,17 @@
 **How to run:** Install Java JDK >11 and double-click on the jar.  
 **How to compile:** `gradle shadowJar`
 
+## Modifications needed
+
+1. To use **Bitmap Display++**, please add the following code at the end of each render loop:
+
+```asm
+# Tell the display to update
+lw   $t8, ADDR_DISPLAY
+li   $t9, 1
+sw   $t9, 0($t8)
+```
+
 ## Keyboard++
 
 ![Demo](img/bitmap_display_plus_plus.png)
@@ -391,6 +402,23 @@ UNDEFINED      = 0x0
 ```
 
 </details>
+
+
+## Optimizations
+
+In MARS, the BitmapDisplay [re-draws the entire canvas](https://github.com/thomasrussellmurphy/MARS_Assembler/blob/c21dd72e8d2e4a51eb24e276c3f39ef1789148f2/mars/tools/BitmapDisplay.java#L496) instead of only the updated pixels whenever any memory address is updated. This makes updating the display very very very slow, taking 12% of all run time.
+
+
+
+For example, if I loop through the display and change every pixel in my assembly code, the original running time of h∗w will now take h2∗w2, making it take around one second for each update.
+
+Since I can’t easily draw one pixel on update without manual manipulation of AWT Graphics, I changed it so that it treats bit 0 of the memory display as an “update bit,” and only re-draw the screen when the MIPS program sets bit 0 to 1.
+
+After optimizing for this, it runs faster but still not enough for the animation to be smooth. Then, I discovered that most of the running time is used by the backstepper and notifying observers for changes in registers and memory:
+
+
+
+By default, MARS will store backstep register file copies each time a register is updated, which takes a lot of time since registers are updated very frequently. So I removed backstepping when the execution speed limit is not set. MARS also notifies all memory observers when a program statement instruction is read from memory, which I also removed because nothing uses the notification from reading program statements.
 
 
 ## License
