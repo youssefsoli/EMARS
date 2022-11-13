@@ -11,6 +11,7 @@
 * Switched to Gradle build system with Kotlin support
 * Added `--open` command-line option to open a file on start
 * Added **Keyboard++**: Enhanced keyboard events
+* **Keyboard++** is still compatible with old keyboard's ASM code, even though it only repeats the last key down until the key is released.
 * Refactored many classes in Kotlin
 * A LOT of [optimizations](https://github.com/hykilpikonna/EMARS#optimizations)
 
@@ -21,7 +22,7 @@
 
 ## Modifications needed
 
-1. To use **Bitmap Display++**, please add the following code at the end of each render loop:
+1. To use **Bitmap Display++**, please add the following code at the end of each loop, after render but before sleep:
 
 ```asm
 # Tell the display to update
