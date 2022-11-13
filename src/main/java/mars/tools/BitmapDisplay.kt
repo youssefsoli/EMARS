@@ -73,7 +73,8 @@ class BitmapDisplay : AbstractMarsToolAndApplication
 
     // Keyboard++
     private var keyboardAddr: UInt = 0xFFFF0010u
-    private var displayUpdateAddr: UInt = 0xFFFF0008u
+    private var oldKeyboardAddr: UInt = 0xFFFF0000u
+    private var oldKeyboardLastPressed: Char = ' '
     private var keyboardAttached = false
     private lateinit var uiKeyboard: JTextField
 
@@ -149,7 +150,7 @@ class BitmapDisplay : AbstractMarsToolAndApplication
         if (ac !is MemoryAccessNotice || ac.accessType != AccessNotice.WRITE) return
         val addr = ac.address.toUInt()
 
-        // For the keyboard
+        // For the keyboard++
         if (addr in keyboardAddr..keyboardAddr + 0x30u)
         {
             // Offset 0x01 or 0x11 or 0x21 bytes are for telling the keyboard that the events are received
@@ -201,6 +202,24 @@ class BitmapDisplay : AbstractMarsToolAndApplication
         println("[Keyboard++] ${e.id} '${e.keyChar}' ${e.keyCode}")
         val queue = pooledKeyEvents[offset]!!
 
+        // Old keyboard compatibility
+        synchronized(Globals.memoryAndRegistersLock)
+        {
+            if (e.id == KeyEvent.KEY_PRESSED)
+            {
+                oldKeyboardLastPressed = e.keyChar
+                Globals.memory.setWord(oldKeyboardAddr.toInt(), 1)
+                Globals.memory.setWord((oldKeyboardAddr + 4u).toInt(), e.keyChar.code)
+            }
+
+            if (e.id == KeyEvent.KEY_RELEASED && e.keyChar == oldKeyboardLastPressed)
+            {
+                oldKeyboardLastPressed = 0.toChar()
+                Globals.memory.setWord(oldKeyboardAddr.toInt(), 0)
+                Globals.memory.setWord((oldKeyboardAddr + 4u).toInt(), 0)
+            }
+        }
+
         // Check for more than 7 key events queued
         if (queue.size == 7) return
 
@@ -208,11 +227,11 @@ class BitmapDisplay : AbstractMarsToolAndApplication
         queue.add(e)
 
         // Add to memory
+        var addr = keyboardAddr + offset
+        println("[Keyboard++] Address ${addr.toHex(8)} set to ${queue.size} | ${addr.toHex(8)} set to ${e.keyCode} (${e.keyChar.toHex()})")
         synchronized(Globals.memoryAndRegistersLock)
         {
             // Change 0x0: Number of events
-            var addr = keyboardAddr + offset
-            println("[Keyboard++] Address ${addr.toHex(8)} set to ${queue.size} | ${addr.toHex(8)} set to ${e.keyCode} (${e.keyChar.toHex()})")
             Globals.memory.setByte(addr.toInt(), queue.size)
 
             // Set the keycode
