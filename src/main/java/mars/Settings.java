@@ -305,6 +305,18 @@ public class Settings extends Observable
      */
     public static final int REGISTER_HIGHLIGHT_FOREGROUND = 11;
 
+
+    /**
+     * Available integer-based settings
+     */
+    public enum IntegerSetting
+    {
+        UNIT_WIDTH,
+        UNIT_HEIGHT,
+        DISPLAY_WIDTH,
+        DISPLAY_HEIGHT,
+    }
+
     /* Properties file used to hold default settings. */
     private static final String settingsFile = "Settings";
 
@@ -351,6 +363,8 @@ public class Settings extends Observable
      */
     private static final String[] defaultColorSettingsValues = {"0x00e0e0e0", "0", "0x00ffffff", "0", "0x00ffff99", "0", "0x0033ff00", "0", "0x0099ccff", "0", "0x0099cc55", "0"};
 
+    private static final int[] defaultIntegerSettingsValues = {2, 2, 512, 256};
+
     private static final String SYNTAX_STYLE_COLOR_PREFIX = "SyntaxStyleColor_";
 
     private static final String SYNTAX_STYLE_BOLD_PREFIX = "SyntaxStyleBold_";
@@ -384,6 +398,8 @@ public class Settings extends Observable
     private final String[] fontSizeSettingsValues;
 
     private final String[] colorSettingsValues;
+
+    private final int[] integerSettingsValues;
 
     private final Preferences preferences;
 
@@ -427,6 +443,7 @@ public class Settings extends Observable
         fontStyleSettingsValues = new String[fontStyleSettingsKeys.length];
         fontSizeSettingsValues = new String[fontSizeSettingsKeys.length];
         colorSettingsValues = new String[colorSettingsKeys.length];
+        integerSettingsValues = new int[IntegerSetting.values().length];
         // This determines where the values are actually stored.  Actual implementation
         // is platform-dependent.  For Windows, they are stored in Registry.  To see,
         // run regedit and browse to: HKEY_CURRENT_USER\Software\JavaSoft\Prefs\mars
@@ -1221,7 +1238,7 @@ public class Settings extends Observable
     }
 
     /**
-     * Get Color object for specified settings key. Returns null if key is not found or its value is not a valid color
+     * Get Integer object for specified settings key. Returns null if key is not found or its value is not a valid color
      * encoding.
      *
      * @param key the Setting key
@@ -1266,6 +1283,54 @@ public class Settings extends Observable
     public Color getDefaultColorSettingByPosition(int position)
     {
         return getColorValueByPosition(position, defaultColorSettingsValues);
+    }
+
+    /**
+     * Get int for specified settings key. Returns null if key is not found or its value is not a valid int
+     * encoding.
+     *
+     * @param key the Setting key
+     * @return corresponding int, or null if key not found or value not valid int
+     */
+    public int getIntegerSettingByKey(IntegerSetting key)
+    {
+        return getIntegerValueByKey(key, integerSettingsValues);
+    }
+
+    /**
+     * Get default int value for specified settings key. Returns null if key is not found or its value is not a valid
+     * integer encoding.
+     *
+     * @param key the Setting key
+     * @return corresponding default int, or null if key not found or value not valid integer
+     */
+    public int getDefaultIntegerSettingByKey(IntegerSetting key)
+    {
+        return getIntegerValueByKey(key, defaultIntegerSettingsValues);
+    }
+
+    /**
+     * Get int for specified settings name (a static constant). Returns null if argument invalid or its value
+     * is not a valid integer encoding.
+     *
+     * @param position the Setting name (see list of static constants)
+     * @return corresponding int, or null if argument invalid or value not valid integer
+     */
+    public int getIntegerSettingByPosition(int position)
+    {
+        return getIntegerValueByPosition(position, integerSettingsValues);
+    }
+
+    /**
+     * Get default int for specified settings name (a static constant). Returns null if argument invalid or its
+     * value is not a valid integer encoding.
+     *
+     * @param position the Setting name (see list of static constants)
+     * @return corresponding default int, or null if argument invalid or value not valid integer
+     */
+    public int getDefaultIntegerSettingByPosition(int position)
+    {
+        return getIntegerValueByPosition(position, defaultIntegerSettingsValues);
     }
 
     /**
@@ -1380,6 +1445,38 @@ public class Settings extends Observable
         }
     }
 
+    /**
+     * Set int for specified settings key.  Has no effect if key is invalid.
+     *
+     * @param key the Setting key
+     * @param number the integer to save
+     */
+    public void setIntegerSettingByKey(IntegerSetting key, int number)
+    {
+        for (int i = 0; i < IntegerSetting.values().length; i++)
+        {
+            if (key.equals(IntegerSetting.values()[i]))
+            {
+                setIntegerSettingByPosition(i, number);
+                return;
+            }
+        }
+    }
+
+    /**
+     * Set int for specified settings name (a static constant). Has no effect if invalid.
+     *
+     * @param position the Setting name (see list of static constants)
+     * @param number the integer to save
+     */
+    public void setIntegerSettingByPosition(int position, int number)
+    {
+        if (position >= 0 && position < IntegerSetting.values().length)
+        {
+            setIntegerSetting(position, number);
+        }
+    }
+
     /////////////////////////////////////////////////////////////////////////
     //
     //     PRIVATE HELPER METHODS TO DO THE REAL WORK
@@ -1413,6 +1510,7 @@ public class Settings extends Observable
             fontSizeSettingsValues[i] = defaultFontSizeSettingsValues[i];
         }
         System.arraycopy(defaultColorSettingsValues, 0, colorSettingsValues, 0, colorSettingsValues.length);
+        System.arraycopy(defaultIntegerSettingsValues, 0, integerSettingsValues, 0, integerSettingsValues.length);
         initializeEditorSyntaxStyles();
     }
 
@@ -1473,6 +1571,40 @@ public class Settings extends Observable
             }
         }
         return color;
+    }
+
+    // Used by setter methods for integer-based settings
+    private void setIntegerSetting(int settingIndex, int number)
+    {
+        integerSettingsValues[settingIndex] = number;
+        saveIntegerSetting(settingIndex);
+    }
+
+    // Get int for this key value.  Get it from values array provided as argument (could be either
+    // the current or the default settings array).
+    private int getIntegerValueByKey(IntegerSetting key, int[] values)
+    {
+        int number = 0;
+        for (int i = 0; i < IntegerSetting.values().length; i++)
+        {
+            if (key.equals(IntegerSetting.values()[i]))
+            {
+                return getIntegerValueByPosition(i, values);
+            }
+        }
+        return 0;
+    }
+
+    // Get int for this key array position.  Get it from values array provided as argument (could be either
+    // the current or the default settings array).
+    private int getIntegerValueByPosition(int position, int[] values)
+    {
+        int number = 0;
+        if (position >= 0 && position < IntegerSetting.values().length)
+        {
+            number = values[position];
+        }
+        return number;
     }
 
 
@@ -1555,6 +1687,13 @@ public class Settings extends Observable
                     colorSettingsValues[i] = defaultColorSettingsValues[i] = settingValue;
                 }
             }
+            for (int i = 0; i < IntegerSetting.values().length; i++) {
+                settingValue = Globals.getPropertyEntry(filename, IntegerSetting.values()[i].name());
+                if (settingValue != null)
+                {
+                    integerSettingsValues[i] = defaultIntegerSettingsValues[i] = Integer.parseInt(settingValue);
+                }
+            }
         }
         catch (Exception e)
         {
@@ -1589,6 +1728,11 @@ public class Settings extends Observable
         for (int i = 0; i < colorSettingsKeys.length; i++)
         {
             colorSettingsValues[i] = preferences.get(colorSettingsKeys[i], colorSettingsValues[i]);
+        }
+
+        for (int i = 0; i < IntegerSetting.values().length; i++)
+        {
+            integerSettingsValues[i] = preferences.getInt(IntegerSetting.values()[i].name(), integerSettingsValues[i]);
         }
         getEditorSyntaxStyleSettingsFromPreferences();
     }
@@ -1657,6 +1801,24 @@ public class Settings extends Observable
         try
         {
             preferences.put(colorSettingsKeys[index], colorSettingsValues[index]);
+            preferences.flush();
+        }
+        catch (SecurityException se)
+        {
+            // cannot write to persistent storage for security reasons
+        }
+        catch (BackingStoreException bse)
+        {
+            // unable to communicate with persistent storage (strange days)
+        }
+    }
+
+    // Save the key-value pair in the Properties object and assure it is written to persisent storage.
+    private void saveIntegerSetting(int index)
+    {
+        try
+        {
+            preferences.putInt(IntegerSetting.values()[index].name(), integerSettingsValues[index]);
             preferences.flush();
         }
         catch (SecurityException se)
