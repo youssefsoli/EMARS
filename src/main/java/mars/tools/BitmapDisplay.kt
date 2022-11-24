@@ -1,6 +1,7 @@
 package mars.tools
 
 import mars.Globals
+import mars.Settings.IntegerSetting.*
 import mars.detectRadix
 import mars.mips.hardware.*
 import mars.toHex
@@ -309,37 +310,46 @@ class BitmapDisplay : AbstractMarsToolAndApplication
     // UI components and layout for left half of GUI, where settings are specified.
     private fun buildOrganizationArea(): JComponent
     {
+        unitWidth = Globals.getSettings().getIntegerSettingByKey(UNIT_WIDTH)
+        val unitWidthOptions = arrayOf(1, 2, 4, 8, 16, 32)
         val uiUnitWidthSelector = JComboBox(arrayOf(1, 2, 4, 8, 16, 32)).apply {
             isEditable = false
             background = backgroundColor
-            selectedIndex = 1
+            selectedIndex = unitWidthOptions.indexOf(unitWidth)
             toolTipText = "Width in pixels of rectangle representing memory word"
             addActionListener {
                 unitWidth = getInt()
+                Globals.getSettings().setIntegerSettingByKey(UNIT_WIDTH, unitWidth)
                 grid = createNewGrid()
                 reset()
             }
         }
 
-        val uiUnitHeightSelector = JComboBox(arrayOf(1, 2, 4, 8, 16, 32)).apply {
+        unitHeight = Globals.getSettings().getIntegerSettingByKey(UNIT_HEIGHT)
+        val unitHeightOptions = arrayOf(1, 2, 4, 8, 16, 32)
+        val uiUnitHeightSelector = JComboBox(unitHeightOptions).apply {
             isEditable = false
             background = backgroundColor
-            selectedIndex = 1
+            selectedIndex = unitHeightOptions.indexOf(unitHeight)
             toolTipText = "Height in pixels of rectangle representing memory word"
             addActionListener {
                 unitHeight = getInt()
+                Globals.getSettings().setIntegerSettingByKey(UNIT_HEIGHT, unitHeight)
                 grid = createNewGrid()
                 reset()
             }
         }
 
+        displayWidth = Globals.getSettings().getIntegerSettingByKey(DISPLAY_WIDTH)
+        val displayWidthOptions = arrayOf(64, 128, 256, 512, 1024)
         val uiWidthSelector = JComboBox(arrayOf(64, 128, 256, 512, 1024)).apply {
             isEditable = false
             background = backgroundColor
-            selectedIndex = 3
+            selectedIndex = displayWidthOptions.indexOf(displayWidth)
             toolTipText = "Total width in pixels of display area"
             addActionListener {
                 displayWidth = getInt()
+                Globals.getSettings().setIntegerSettingByKey(DISPLAY_WIDTH, displayWidth)
                 canvas.preferredSize = displayDimension
                 canvas.size = displayDimension
                 grid = createNewGrid()
@@ -347,13 +357,16 @@ class BitmapDisplay : AbstractMarsToolAndApplication
             }
         }
 
-        val uiHeightSelector = JComboBox(arrayOf(64, 128, 256, 512, 1024)).apply {
+        displayHeight = Globals.getSettings().getIntegerSettingByKey(DISPLAY_HEIGHT)
+        val displayHeightOptions = arrayOf(64, 128, 256, 512, 1024)
+        val uiHeightSelector = JComboBox(displayHeightOptions).apply {
             isEditable = false
             background = backgroundColor
-            selectedIndex = 2
+            selectedIndex = displayHeightOptions.indexOf(displayHeight)
             toolTipText = "Total height in pixels of display area"
             addActionListener {
                 displayHeight = getInt()
+                Globals.getSettings().setIntegerSettingByKey(DISPLAY_HEIGHT, displayHeight)
                 canvas.preferredSize = displayDimension
                 canvas.size = displayDimension
                 grid = createNewGrid()
