@@ -186,9 +186,9 @@ class BitmapDisplay : AbstractMarsToolAndApplication
         }
         catch (e: IndexOutOfBoundsException)
         {
+            if (offset == grid.cols * grid.rows) canvas.repaint()
             // If address is out of range for display, do nothing.
         }
-        if (offset == 0) canvas.repaint()
     }
 
     /**
